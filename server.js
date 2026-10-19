@@ -13,7 +13,7 @@ const MAX_CLIENTS = 400;
 const COUNTDOWN_MS = 3000;
 const ROUND_S = Number(process.env.ROUND_S) || 60;
 const ROUND_MAX_MS = ROUND_S * 1000 + 8000;   // falls eine Meldung nie ankommt
-const IDLE_MS = 45000;                        // so lange darf ein Platz blockiert werden, während die andere Person bereit ist
+const IDLE_MS = 180000;                        // so lange darf ein Platz blockiert werden, während die andere Person bereit ist
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',

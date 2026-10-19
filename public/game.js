@@ -1070,7 +1070,7 @@ function onMessage(m) {
   if (m.t === 'game') {
     const was = D.you;
     Object.assign(D, { you: m.you, state: m.state, round: m.round, dur: m.dur, players: m.players, viewers: m.viewers, history: m.history });
-    if (was !== D.you) { panels.forEach(p => { resetFx(p.fx); p.key = ''; }); if (D.you < 0) D.practice = null; }
+    if (was !== D.you) { D.howSeen = false; panels.forEach(p => { resetFx(p.fx); p.key = ''; }); if (D.you < 0) D.practice = null; }
     if (D.you >= 0) joinMsg.textContent = '';
     renderRounds();
     render();
@@ -1078,6 +1078,7 @@ function onMessage(m) {
     toLobby();
     Object.assign(D, { phase: 'countdown', round: m.round, roles: m.roles, dur: m.dur, startAt: performance.now() + m.delay, sendAcc: 0, doneSent: false, lastCount: 0 });
     D.sched = new Schedule(m.seed);
+    D.howSeen = false;   // nächste Runde neue Stromart: Anleitung nochmals zeigen
     D.remote.forEach(r => r.reset());
     if (D.you >= 0) D.saw = new Sawyer(D.roles[D.you], D.sched, true, { limit: D.dur });
     render();
@@ -1143,7 +1144,8 @@ readyBtn.addEventListener('click', () => {
 });
 nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') readyBtn.click(); });
 watchBtn.addEventListener('click', () => { send({ t: 'watch' }); toLobby(); });
-$('#howReady').addEventListener('click', () => { Sound.ensure(); send({ t: 'ready' }); });
+$('#howReady').addEventListener('click', () => { Sound.ensure(); D.howSeen = true; send({ t: 'ready' }); });
+$('#howPractice').addEventListener('click', () => { Sound.ensure(); D.howSeen = true; render(); });
 $('#howWatch').addEventListener('click', () => watchBtn.click());
 
 // Knöpfe, Namen und Texte, wenn sich am Spiel etwas ändert
@@ -1153,10 +1155,12 @@ function render() {
   $('#nameField').hidden = !!me;
   nameInput.disabled = !D.open || (!me && free === 0);
   watchBtn.hidden = !me;
-  readyBtn.hidden = !!me;
+  // Spieler üben, bis sie selbst auf Bereit klicken. Erst wenn beide bereit sind, startet die Runde.
+  readyBtn.hidden = !!me && (me.ready || D.phase !== 'lobby' || !D.howSeen);
+  readyBtn.textContent = me ? 'Bereit' : 'Mitspielen';
   readyBtn.disabled = !D.open || (!me && free === 0);
   // Anleitung vor dem Bereit: nur die eigene Säge, Stromart, Steuerung und Ziel
-  const how = !!me && !me.ready && D.phase === 'lobby';
+  const how = !!me && !me.ready && D.phase === 'lobby' && !D.howSeen;
   $('#howTo').hidden = !how;
   if (how) {
     const role = roleOf(D.you);
@@ -1172,7 +1176,7 @@ function render() {
   else if (D.phase === 'countdown') st = 'Achtung, gleich geht es los!';
   else if (D.phase === 'play') st = `${nameOf(0)} gegen ${nameOf(1)}: Wer sägt mehr Stämme?`;
   else if (D.phase === 'over' && D.result) st = D.result.winner < 0 ? 'Unentschieden!' : D.result.names[D.result.winner] + ' gewinnt!';
-  else if (me) st = me.ready ? (other ? `Du bist bereit. Warte auf ${other.name} … Bis dahin kannst du üben.` : 'Du bist bereit. Warte auf eine zweite Person … Bis dahin kannst du üben.') : 'Lies die Anleitung und klicke auf Bereit.';
+  else if (me) st = me.ready ? (other ? `Du bist bereit. Warte auf ${other.name} … Bis dahin kannst du üben.` : 'Du bist bereit. Warte auf eine zweite Person … Bis dahin kannst du üben.') : (D.howSeen ? 'Übe, so lange du willst, und klicke dann auf Bereit.' : 'Lies die Anleitung.');
   else if (free === 2) st = 'Zwei Plätze frei: Name eingeben und Mitspielen klicken.';
   else if (free === 1) st = 'Ein Platz ist frei: Name eingeben und Mitspielen klicken.';
   else st = `Du schaust zu: ${nameOf(0)} gegen ${nameOf(1)}.`;
