@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Strom erklärt</title>
+<meta name="description" content="Erklärseite zu Sägewerk-Panik: Gleichstrom und Wechselstrom, die Unterschiede und was Hertz bedeutet.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="base.css">
+<style>
+body{font-size:17px}
+.toc{display:flex;flex-wrap:wrap;gap:8px}
+.toc a{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font:700 1.05rem/1 var(--font-display);letter-spacing:.05em;text-transform:uppercase;text-decoration:none}
+.toc a:hover{background:var(--plate)}
+.toc a b{font-family:var(--font-mono);font-size:.85rem;color:var(--muted)}
+
+.sec{display:flex;flex-direction:column;gap:16px;padding-top:18px;scroll-margin-top:12px}
+.sec-head{display:flex;align-items:center;gap:16px}
+.num{flex:none;display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:var(--ink);color:var(--panel);font:800 1.8rem/1 var(--font-display)}
+.sec-head h2{margin:0;font:800 clamp(2.1rem,4.4vw,3.1rem)/.95 var(--font-display);text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.sec-head p{margin:5px 0 0;color:var(--muted);font-weight:500;max-width:70ch}
+.spec{font:700 .82rem/1 var(--font-mono);letter-spacing:0;text-transform:none;color:var(--muted)}
+
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:820px){.duo{grid-template-columns:minmax(0,1fr)}}
+.circuit{height:clamp(220px,32vh,380px)}
+.circuit canvas,.scope canvas,.met canvas{display:block;width:100%;height:100%}
+.cap{margin:0;padding:6px 16px 0;font:600 .72rem/1.2 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.body{display:flex;flex-direction:column;gap:12px;padding:14px 18px 18px}
+.body p{margin:0;max-width:62ch}
+.big{font-size:1.25rem;font-weight:600;line-height:1.35}
+.big b{color:var(--mode)}
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px 16px;margin:0}
+.facts dt{font:600 .72rem/1.6 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:0;font-weight:600}
+.facts .sym{width:28px;height:16px;vertical-align:-3px;color:var(--mode)}
+
+.note p{margin:0 0 12px;max-width:66ch}
+.note p:last-child{margin-bottom:0}
+.note ul{margin:0;padding-left:1.15em;display:grid;gap:9px;max-width:66ch}
+.ask{margin:0;padding:12px 14px;border-radius:8px;background:var(--plate);font-weight:600}
+.ask .k{display:block;margin-bottom:3px}
+.map td,.map th{white-space:normal;font-size:1.02rem}
+.map td:first-child{font-weight:700;width:42%}
+.map .arrow{color:var(--muted);font-family:var(--font-mono)}
+
+.cmp th,.cmp td{padding:12px 14px;white-space:normal;font-size:1.05rem;vertical-align:top}
+.cmp thead th{font:800 1.35rem/1 var(--font-display);letter-spacing:.04em;text-transform:uppercase}
+.cmp thead th .sym{width:32px;height:18px;vertical-align:-2px;margin-right:6px}
+.cmp tbody th{width:20%;font:600 .74rem/1.4 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cmp td.c-dc,.cmp td.c-ac{font-weight:600;color:var(--ink)}
+.cmp td.c-dc{background:color-mix(in srgb,var(--dc-soft) 55%,transparent)}
+.cmp td.c-ac{background:color-mix(in srgb,var(--ac-soft) 55%,transparent)}
+.cmp .sub{display:block;margin-top:3px;font-weight:500;color:var(--muted);font-size:.92rem}
+
+.why{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.why{grid-template-columns:minmax(0,1fr)}}
+.rating{position:relative;display:flex;flex-direction:column;gap:12px;padding:20px 26px;border-radius:10px;border:2px solid var(--ink);background:var(--plate);font-family:var(--font-mono)}
+.rating::before,.rating::after{content:"";position:absolute;top:10px;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--muted);opacity:.6}
+.rating::before{left:10px}.rating::after{right:10px}
+.rating-title{font:800 1.3rem/1 var(--font-display);letter-spacing:.06em;text-transform:uppercase;text-align:center}
+.rl{display:grid;grid-template-columns:5.2em minmax(0,1fr);align-items:center;gap:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:1.15rem;font-weight:700}
+.rl .k{font-family:var(--font-mono)}
+.rl .sym{width:30px;height:17px;vertical-align:-3px;margin:0 3px}
+.rl .c-ac .sym,.rl .c-dc .sym{color:inherit}
+.rating-note{margin:12px 0 0;font-size:.98rem}
+
+.hzgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px;align-items:start}
+@media (max-width:900px){.hzgrid{grid-template-columns:minmax(0,1fr)}}
+.def{font:800 clamp(2.2rem,5vw,3.4rem)/1 var(--font-display);text-transform:uppercase;margin:0 0 14px;color:var(--ac)}
+.met{height:220px;background:var(--panel)}
+.seg{display:grid;grid-template-columns:repeat(var(--n,2),minmax(0,1fr));gap:4px;padding:4px;border-radius:10px;background:var(--plate);border:1px solid var(--line)}
+.seg button{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 8px;border:0;border-radius:7px;background:transparent;cursor:pointer;font:700 1.05rem/1 var(--font-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px var(--shadow)}
+.seg button[data-src="ac"] .sym{color:var(--ac)} .seg button[data-src="dc"] .sym{color:var(--dc)}
+.readouts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px}
+.readouts .v{white-space:normal}
+.m{display:flex;flex-direction:column;gap:4px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+
+.scale{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.scale li{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:10px;background:var(--panel);border:1px solid var(--line)}
+.scale li.hot{border-color:var(--ac);box-shadow:inset 0 0 0 1px var(--ac)}
+.hzv{font:800 1.6rem/1.05 var(--font-display);letter-spacing:.02em;overflow-wrap:anywhere}
+.scale li.hot .hzv{color:var(--ac)}
+.scale li span:last-child{color:var(--muted);font-weight:600}
+
+.slow{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.slow{grid-template-columns:minmax(0,1fr)}}
+.slow .circuit{height:clamp(240px,40vh,500px)}
+.scope-cap{display:flex;justify-content:space-between;gap:10px;margin:0 14px 5px;font:600 .72rem/1.2 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.scope{height:150px;margin:0 14px 16px;border-radius:6px;overflow:hidden;background:var(--scope)}
+.controls{padding:0}
+.grp{display:flex;flex-direction:column;gap:10px;padding:16px 20px;border-top:1px solid var(--line)}
+.grp:first-child{border-top:0}
+.grp ul{margin:0;padding-left:1.15em;display:grid;gap:8px}
+.speedhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.speedhead output{font:800 1.7rem/1 var(--font-display);text-transform:uppercase;letter-spacing:.03em}
+input[type="range"]{width:100%;margin:4px 0 0;accent-color:var(--ink)}
+.rangelabels{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.safety{margin:0;font-size:.88rem;color:var(--muted)}
+
+.quiz{display:grid;gap:10px}
+.quiz details{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.quiz summary{cursor:pointer;padding:14px 18px;font:700 1.25rem/1.25 var(--font-body);list-style-position:outside;margin-left:1.1em}
+.quiz details[open] summary{border-bottom:1px dashed var(--line)}
+.quiz details p{margin:0;padding:12px 18px 16px;max-width:70ch;font-size:1.08rem}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding-top:12px}
+.foot p{margin:0;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./">
+      <h1>Strom erklärt</h1>
+      <p>Gleichstrom, Wechselstrom und Hertz. Zum Zeigen nach Sägewerk-Panik.</p>
+    </a>
+    <nav class="nav" aria-label="Seite">
+      <a class="btn small" href="./">Zum Spiel</a>
+      <button class="btn ghost small" id="fullscreen" type="button">Vollbild</button>
+    </nav>
+  </header>
+
+  <nav class="toc" aria-label="Inhalt">
+    <a href="#ac-dc"><b>1</b>AC und DC</a>
+    <a href="#unterschiede"><b>2</b>Die Unterschiede</a>
+    <a href="#hertz"><b>3</b>Was ist Hertz?</a>
+    <a href="#selbsttest"><b>?</b>Selbsttest</a>
+  </nav>
+
+  <!-- ===================== 1 ===================== -->
+  <section class="sec" id="ac-dc" aria-labelledby="h1sec">
+    <div class="sec-head">
+      <span class="num" aria-hidden="true">1</span>
+      <div>
+        <h2 id="h1sec">AC und DC</h2>
+        <p>Strom heisst: Elektronen bewegen sich im Draht. Die Frage ist nur, wie.</p>
+      </div>
+    </div>
+
+    <div class="duo">
+      <article class="side" id="duoDc" data-mode="dc" aria-labelledby="dcTitle">
+        <header class="plate">
+          <span class="plate-title" id="dcTitle">Gleichstrom</span>
+          <span class="kind">
+            <svg class="sym" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 6.5h30"/><path d="M2 14h7M13.5 14h7M25 14h7"/></svg>
+            <span class="tag">DC</span>
+          </span>
+        </header>
+        <p class="cap">Stark verlangsamt · Folgt dem gelben Elektron</p>
+        <div class="circuit"><canvas aria-hidden="true"></canvas></div>
+        <div class="body">
+          <p class="big">Die Elektronen fliessen <b>immer in dieselbe Richtung</b>, Runde um Runde. Wie das Seil der Säge, wenn ihr das Mausrad immer gleich herum dreht.</p>
+          <dl class="facts">
+            <dt>Englisch</dt><dd>DC, direct current</dd>
+            <dt>Zeichen</dt><dd><svg class="sym" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 6.5h30"/><path d="M2 14h7M13.5 14h7M25 14h7"/></svg> gerader Strich</dd>
+            <dt>Kommt aus</dt><dd>Batterie, Akku, Solarzelle, USB-Ladegerät</dd>
+          </dl>
+        </div>
+      </article>
+
+      <article class="side" id="duoAc" data-mode="ac" aria-labelledby="acTitle">
+        <header class="plate">
+          <span class="plate-title" id="acTitle">Wechselstrom</span>
+          <span class="kind">
+            <svg class="sym" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 10C6 0 13 0 17 10S28 20 32 10"/></svg>
+            <span class="tag">AC</span>
+          </span>
+        </header>
+        <p class="cap">Stark verlangsamt · Folgt dem gelben Elektron</p>
+        <div class="circuit"><canvas aria-hidden="true"></canvas></div>
+        <div class="body">
+          <p class="big">Die Elektronen <b>pendeln hin und her</b> und kommen kaum vom Fleck. Wie das Seil der Säge, wenn ihr die Maus hin und her bewegt: links, rechts, links, rechts.</p>
+          <dl class="facts">
+            <dt>Englisch</dt><dd>AC, alternating current</dd>
+            <dt>Zeichen</dt><dd><svg class="sym" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 10C6 0 13 0 17 10S28 20 32 10"/></svg> Welle</dd>
+            <dt>Kommt aus</dt><dd>Generator im Kraftwerk, Steckdose</dd>
+          </dl>
+        </div>
+      </article>
+    </div>
+
+    <div class="duo">
+      <section class="note" aria-labelledby="mapTitle">
+        <div class="notehead"><h2 id="mapTitle">Vom Spiel zum Strom</h2></div>
+        <div class="table-wrap">
+          <table class="map">
+            <thead><tr><th scope="col">Im Sägewerk</th><th scope="col">Beim Strom</th></tr></thead>
+            <tbody>
+              <tr><td>Eure Hand (Maus)</td><td>Stromquelle: Batterie oder Generator</td></tr>
+              <tr><td>Seil, überall gleichzeitig in Bewegung</td><td>Elektronen im Draht</td></tr>
+              <tr><td>Reibung im Holz, Sägemehl, Wärme</td><td>Lampe: Der Glühdraht wird heiss und leuchtet</td></tr>
+              <tr><td class="c-dc">Seil läuft im Kreis (Mausrad)</td><td>Gleichstrom: eine Richtung</td></tr>
+              <tr><td class="c-ac">Seil fährt hin und her (Maus)</td><td>Wechselstrom: hin und her</td></tr>
+              <tr><td>Hz-Anzeige beim Wechselstrom</td><td>Frequenz: wie oft pro Sekunde hin und her</td></tr>
+                            <tr><td>Nagel im Holz, Seil reisst</td><td>Zu viel Strom, die Sicherung springt raus</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="note" aria-labelledby="lampTitle">
+        <div class="notehead"><h2 id="lampTitle">Warum leuchtet die Lampe bei beiden?</h2></div>
+        <p>Die Lampe braucht Bewegung, keine bestimmte Richtung. Die Elektronen stossen sich im dünnen Glühdraht, der Draht wird heiss und leuchtet. Ob sie dabei vorwärts oder rückwärts flitzen, ist ihm egal.</p>
+        <p>Genau so sägt im Spiel auch das Seil, das nur hin und her fährt. Der gelbe Punkt kommt nie an, und trotzdem fällt Sägemehl.</p>
+        <p class="ask"><span class="k">Gut zu wissen</span>Elektronen fliessen vom Minuspol (−) zum Pluspol (+). In vielen Schaltplänen zeigt der Pfeil trotzdem von + nach −. Diese Richtung wurde festgelegt, bevor man die Elektronen kannte.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== 2 ===================== -->
+  <section class="sec" id="unterschiede" aria-labelledby="h2sec">
+    <div class="sec-head">
+      <span class="num" aria-hidden="true">2</span>
+      <div>
+        <h2 id="h2sec">Die Unterschiede</h2>
+        <p>Keine Stromart ist besser. Jede passt zu anderen Aufgaben.</p>
+      </div>
+    </div>
+
+    <div class="note table-wrap">
+      <table class="cmp">
+        <thead>
+          <tr>
+            <td></td>
+            <th scope="col" class="c-dc"><svg class="sym" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 6.5h30"/><path d="M2 14h7M13.5 14h7M25 14h7"/></svg>Gleichstrom DC</th>
+            <th scope="col" class="c-ac"><svg class="sym" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 10C6 0 13 0 17 10S28 20 32 10"/></svg>Wechselstrom AC</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Richtung</th><td class="c-dc">Immer gleich</td><td class="c-ac">Wechselt dauernd, 100-mal pro Sekunde</td></tr>
+          <tr><th scope="row">Frequenz</th><td class="c-dc">0 Hz</td><td class="c-ac">50 Hz<span class="sub">in der Schweiz und in ganz Europa</span></td></tr>
+          <tr><th scope="row">Woher</th><td class="c-dc">Batterie, Akku, Solarzelle, Netzteil</td><td class="c-ac">Generator im Kraftwerk, Steckdose</td></tr>
+          <tr><th scope="row">Spannung</th><td class="c-dc">1.5 V Batterie, 3.7 V Handy-Akku, 5 V USB<span class="sub">ungefährlich zum Anfassen</span></td><td class="c-ac">230 V Steckdose, bis 380 000 V Hochspannungsleitung<span class="sub">lebensgefährlich</span></td></tr>
+          <tr><th scope="row">Speichern</th><td class="c-dc">Ja, in Akkus und Batterien</td><td class="c-ac">Nein, muss im gleichen Moment erzeugt werden, in dem man ihn braucht</td></tr>
+          <tr><th scope="row">Spannung ändern</th><td class="c-dc">Nur mit Elektronik</td><td class="c-ac">Einfach mit einem Transformator</td></tr>
+          <tr><th scope="row">Im Alltag</th><td class="c-dc">Handy, Laptop, Taschenlampe, E-Auto, Tram (600 V)</td><td class="c-ac">Kühlschrank, Herd, Waschmaschine, SBB-Fahrleitung (15 000 V, 16.7 Hz)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="why">
+      <section class="note" aria-labelledby="whyTitle">
+        <div class="notehead"><h2 id="whyTitle">Warum gibt es beides?</h2></div>
+        <ul>
+          <li><b class="c-ac">Generatoren machen Wechselstrom.</b> Im Kraftwerk dreht sich ein Magnet in einer Spule. Bei jeder halben Umdrehung kehrt der Strom um. So entsteht Wechselstrom ganz von selbst.</li>
+          <li><b class="c-ac">Wechselstrom reist gut.</b> Ein Transformator macht aus 230 V ganz einfach 380 000 V und zurück. Mit hoher Spannung geht auf langen Leitungen viel weniger Energie verloren.</li>
+          <li><b class="c-dc">Geräte und Akkus wollen Gleichstrom.</b> Ein Akku kann nur Gleichstrom speichern, und die Elektronik im Handy rechnet nur mit Gleichstrom.</li>
+          <li><b>Das Ladegerät verbindet beides.</b> Es senkt die Spannung und richtet den Strom gleich. Der Gleichrichter darin lässt den Strom nur in eine Richtung durch: Hin und her rein, eine Richtung raus.</li>
+        </ul>
+      </section>
+      <section class="note" aria-labelledby="plateTitle">
+        <div class="notehead"><h2 id="plateTitle">Schaut auf euer Ladegerät</h2></div>
+        <div class="rating" role="img" aria-label="Typenschild eines USB-Ladegeräts. Input 100 bis 240 Volt Wechselstrom, 50 oder 60 Hertz. Output 5 Volt Gleichstrom, 3 Ampere.">
+          <div class="rating-title">USB-Ladegerät</div>
+          <div class="rl"><span class="k">Input</span><span class="c-ac">100–240 V<svg class="sym" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 10C6 0 13 0 17 10S28 20 32 10"/></svg>50/60 Hz</span></div>
+          <div class="rl"><span class="k">Output</span><span class="c-dc">5 V<svg class="sym" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 6.5h30"/><path d="M2 14h7M13.5 14h7M25 14h7"/></svg>3 A</span></div>
+        </div>
+        <p class="rating-note">Rein kommt <b class="c-ac">Wechselstrom</b> aus der Steckdose, raus geht <b class="c-dc">Gleichstrom</b> für den Akku. Dieses Typenschild steht auf fast jedem Ladegerät.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== 3 ===================== -->
+  <section class="sec" id="hertz" aria-labelledby="h3sec">
+    <div class="sec-head">
+      <span class="num" aria-hidden="true">3</span>
+      <div>
+        <h2 id="h3sec">Was ist Hertz?</h2>
+        <p>Hertz zählt, wie oft etwas pro Sekunde passiert.</p>
+      </div>
+    </div>
+
+    <div class="hzgrid">
+      <section class="note" aria-labelledby="defTitle">
+        <h2 id="defTitle" class="vh">Definition</h2>
+        <p class="def">1 Hz = 1-mal pro Sekunde</p>
+        <p>Beim Wechselstrom zählt man die <b>Schwingungen</b>: einmal ganz hin und wieder zurück. 50&nbsp;Hz an der Steckdose heisst: 50 Schwingungen in jeder Sekunde. Dabei kehrt der Strom 100-mal um.</p>
+        <p>Gleichstrom schwingt nie. Er hat 0&nbsp;Hz.</p>
+        <p>Der Name kommt vom deutschen Forscher <b>Heinrich Hertz</b> (1857–1894). Dass «Hertz» wie «Herz» klingt, ist Zufall. Passt aber: Euer Herz schlägt in Ruhe etwa 1-mal pro Sekunde, also mit gut 1&nbsp;Hz.</p>
+        <p class="ask"><span class="k">Im Spiel</span>Wer die Maus schnell hin und her bewegt, schafft 3 bis 5&nbsp;Hz. Für 50&nbsp;Hz müsstet ihr über 10-mal schneller sein.</p>
+      </section>
+
+      <article class="side" data-mode="ac" aria-labelledby="metTitle">
+        <header class="plate">
+          <span class="plate-title" id="metTitle">Hertz zum Mitklatschen</span>
+          <span class="kind"><span class="tag" id="metTag">0 Hz</span></span>
+        </header>
+        <div class="met"><canvas id="metCanvas" aria-hidden="true"></canvas></div>
+        <div class="body">
+          <div class="seg" style="--n:5" role="group" aria-label="Frequenz wählen">
+            <button type="button" data-hz="0" aria-pressed="true">Stopp</button>
+            <button type="button" data-hz="1" aria-pressed="false">1 Hz</button>
+            <button type="button" data-hz="2" aria-pressed="false">2 Hz</button>
+            <button type="button" data-hz="4" aria-pressed="false">4 Hz</button>
+            <button type="button" data-hz="50" aria-pressed="false">50 Hz</button>
+          </div>
+          <div class="readouts">
+            <div class="m"><span class="k">Schwingungen</span><span class="v" id="metCount">0</span></div>
+            <div class="m"><span class="k">Zeit</span><span class="v" id="metTime">0.0 s</span></div>
+          </div>
+          <p>Klatscht bei jedem Klick mit. Unten seht ihr immer genau 1 Sekunde: Zählt die Berge, das sind die Hertz. Bei 50&nbsp;Hz verschwimmt alles, und die Klicks werden zu einem Brummen.</p>
+          <div class="row"><button class="btn ghost small" id="metSound" type="button" aria-pressed="true">Ton an</button></div>
+        </div>
+      </article>
+    </div>
+
+    <ul class="scale" aria-label="Beispiele für Frequenzen">
+      <li><span class="hzv">≈ 1 Hz</span><span>Herzschlag in Ruhe</span></li>
+      <li><span class="hzv">3–5 Hz</span><span>Eure Maus in Sägewerk-Panik</span></li>
+      <li><span class="hzv">16.7 Hz</span><span>Fahrleitung der SBB</span></li>
+      <li class="hot"><span class="hzv">50 Hz</span><span>Steckdose in der Schweiz</span></li>
+      <li><span class="hzv">≈ 50 Hz</span><span>Flügelschlag eines Kolibris</span></li>
+      <li><span class="hzv">440 Hz</span><span>Ton A der Stimmgabel</span></li>
+      <li><span class="hzv">2 400 000 000 Hz</span><span>WLAN, 2.4 Gigahertz</span></li>
+    </ul>
+
+    <div class="slow">
+      <article class="side" id="slowSide" data-mode="ac" aria-label="Stromkreis in Zeitlupe">
+        <header class="plate">
+          <span class="plate-title"><span class="only-ac">Steckdose in Zeitlupe</span><span class="only-dc">Akku in Zeitlupe</span>
+            <span class="spec only-ac">230 V · 50 Hz</span><span class="spec only-dc">3.7 V · 0 Hz</span></span>
+          <span class="kind">
+            <svg class="sym only-dc" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 6.5h30"/><path d="M2 14h7M13.5 14h7M25 14h7"/></svg>
+            <svg class="sym only-ac" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 10C6 0 13 0 17 10S28 20 32 10"/></svg>
+            <span class="tag only-dc">DC</span><span class="tag only-ac">AC</span>
+          </span>
+        </header>
+        <div class="circuit"><canvas id="slowCircuit" aria-hidden="true"></canvas></div>
+        <div class="scope-cap"><span>Oszilloskop</span><span>Ausschnitt: 40 Millisekunden</span></div>
+        <div class="scope"><canvas id="slowScope" aria-hidden="true"></canvas></div>
+      </article>
+
+      <aside class="note controls" aria-label="Zeitlupe einstellen">
+        <div class="grp">
+          <span class="k">Stromquelle</span>
+          <div class="seg" role="group" aria-label="Stromquelle">
+            <button type="button" data-src="ac" aria-pressed="true"><svg class="sym" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 10C6 0 13 0 17 10S28 20 32 10"/></svg>Steckdose</button>
+            <button type="button" data-src="dc" aria-pressed="false"><svg class="sym" viewBox="0 0 34 20" aria-hidden="true"><path d="M2 6.5h30"/><path d="M2 14h7M13.5 14h7M25 14h7"/></svg>Akku</button>
+          </div>
+        </div>
+        <div class="grp">
+          <div class="speedhead"><label class="k" for="slowSpeed">Zeitlupe</label><output id="slowFactor" for="slowSpeed">50× langsamer</output></div>
+          <input type="range" id="slowSpeed" min="0" max="6" step="1" value="5">
+          <div class="rangelabels"><span>Echtzeit</span><span>100× langsamer</span></div>
+        </div>
+        <div class="grp">
+          <div class="readouts">
+            <div class="m"><span class="k">In Wirklichkeit</span><span class="v" id="slowReal">50 Hz</span></div>
+            <div class="m"><span class="k">Ihr seht</span><span class="v" id="slowSee">1 pro Sekunde</span></div>
+            <div class="m"><span class="k">Vergangene Zeit</span><span class="v" id="slowTime">0.000 s</span></div>
+            <div class="m"><span class="k">Schwingungen</span><span class="v" id="slowCount">0</span></div>
+          </div>
+          <div class="row">
+            <button class="btn ghost small" id="slowPause" type="button">Pause</button>
+            <button class="btn ghost small" id="slowReset" type="button">Zähler auf 0</button>
+          </div>
+        </div>
+        <div class="grp">
+          <span class="k">Ausprobieren</span>
+          <ul>
+            <li>Stellt 100× langsamer ein. Was macht die Lampe, wenn die Elektronen umkehren?</li>
+            <li>Schiebt langsam bis Echtzeit. Ab wann seht ihr kein Flackern mehr?</li>
+            <li>Lasst den Zähler laufen, bis 1 Sekunde vergangen ist. Wie viele Schwingungen sind es?</li>
+          </ul>
+          <p class="safety">Nur ein Modell: An der echten Steckdose wird nie experimentiert.</p>
+        </div>
+      </aside>
+    </div>
+
+    <section class="note" aria-labelledby="flickerTitle">
+      <div class="notehead"><h2 id="flickerTitle">Warum flackert die Lampe nicht?</h2></div>
+      <p>Bei 50&nbsp;Hz wird die Lampe 100-mal pro Sekunde dunkler und wieder hell. Das Auge ist zu langsam dafür: Es mischt alles, was schneller als etwa 20-mal pro Sekunde passiert. Darum sieht das Licht ruhig aus. Mit der Zeitlupe am Handy kann man das Flackern bei manchen Lampen trotzdem sehen.</p>
+    </section>
+  </section>
+
+  <!-- ===================== Selbsttest ===================== -->
+  <section class="sec" id="selbsttest" aria-labelledby="h4sec">
+    <div class="sec-head">
+      <span class="num" aria-hidden="true">?</span>
+      <div>
+        <h2 id="h4sec">Selbsttest</h2>
+        <p>Zuerst selber überlegen, dann aufklappen.</p>
+      </div>
+    </div>
+    <div class="quiz">
+      <details><summary>Was ist der Unterschied zwischen Gleichstrom und Wechselstrom?</summary>
+        <p>Bei Gleichstrom fliessen die Elektronen immer in dieselbe Richtung. Bei Wechselstrom pendeln sie hin und her, an der Steckdose 50 Schwingungen pro Sekunde.</p></details>
+      <details><summary>Was bedeutet «50 Hz» auf einem Gerät?</summary>
+        <p>Der Wechselstrom schwingt 50-mal pro Sekunde ganz hin und zurück. 1&nbsp;Hertz heisst 1-mal pro Sekunde.</p></details>
+      <details><summary>Woran erkennt man auf dem Ladegerät, was rein- und was rausgeht?</summary>
+        <p>Am Zeichen: Die Welle ~ steht für Wechselstrom (Input aus der Steckdose), der gerade Strich mit den Strichlein darunter für Gleichstrom (Output zum Handy).</p></details>
+      <details><summary>Warum leuchtet eine Lampe auch mit Wechselstrom, obwohl die Elektronen nicht vorwärtskommen?</summary>
+        <p>Die Lampe wird durch die Bewegung der Elektronen heiss, egal in welche Richtung. Hin und her bewegt genauso wie immer vorwärts.</p></details>
+      <details><summary>Warum flackert die Lampe nicht, wenn der Strom dauernd umkehrt?</summary>
+        <p>Es geht zu schnell. Das Auge mischt alles, was schneller als etwa 20-mal pro Sekunde passiert. 100-mal heller und dunkler pro Sekunde sieht deshalb ruhig aus.</p></details>
+      <details><summary>Warum kommt aus der Steckdose Wechselstrom, obwohl das Handy Gleichstrom braucht?</summary>
+        <p>Generatoren erzeugen Wechselstrom, und Transformatoren können seine Spannung leicht ändern. So kann man ihn mit sehr hoher Spannung fast ohne Verlust weit transportieren. Das Ladegerät macht daraus am Schluss Gleichstrom.</p></details>
+      <details><summary>Welche Stromart sägt im Spiel besser?</summary>
+        <p>Keine. Für den gleichen Weg des Seils sägen beide gleich viel. Es kommt nur auf euer Tempo an. Die Lampe zeigt den Unterschied: Bei Gleichstrom leuchtet sie gleichmässig, bei Wechselstrom flackert sie im Takt, genau wie beim Strom: Gleichstrom fliesst gleichmässig, Wechselstrom schwingt.</p></details>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>Sägewerk-Panik · Gleichstrom gegen Wechselstrom</p>
+    <a class="btn" href="./">Zurück zum Spiel</a>
+  </footer>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = (sel, root = document) => root.querySelector(sel);
+const TAU = Math.PI * 2;
+
+/* ---------- Farben aus den CSS-Tokens ---------- */
+const root = document.documentElement;
+let themeTick = 0;
+const mq = matchMedia('(prefers-color-scheme: dark)');
+if (mq.addEventListener) mq.addEventListener('change', () => themeTick++); else if (mq.addListener) mq.addListener(() => themeTick++);
+new MutationObserver(() => themeTick++).observe(root, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
+if (document.fonts) document.fonts.ready.then(() => themeTick++);
+
+const TOKENS = {
+  ink: '--ink', muted: '--muted', panel: '--panel', line: '--line', plate: '--plate', copper: '--copper', copperHi: '--copper-hi',
+  electron: '--electron', mark: '--mark', lamp: '--lamp', scope: '--scope', scopeGrid: '--scope-grid',
+  scopeText: '--scope-text', beam: '--beam', mode: '--mode', trace: '--mode-trace',
+  fontBody: '--font-body', fontMono: '--font-mono', fontDisplay: '--font-display',
+};
+function paletteFor(owner) {
+  const key = themeTick + owner.mode;
+  if (owner.palKey !== key) {
+    const cs = getComputedStyle(owner.el);
+    const p = {};
+    for (const k in TOKENS) p[k] = cs.getPropertyValue(TOKENS[k]).trim();
+    owner.pal = p; owner.palKey = key;
+  }
+  return owner.pal;
+}
+function rgba(hex, a) {
+  let h = hex.replace('#', '');
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  const n = parseInt(h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+/* ---------- Canvas ---------- */
+const onScreen = new WeakMap();
+const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => onScreen.set(e.target, e.isIntersecting))) : null;
+function watch(canvas) { if (io) io.observe(canvas); }
+function fit(canvas) {
+  if (onScreen.get(canvas) === false) return null;
+  const r = canvas.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) return null;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w: r.width, h: r.height };
+}
+
+/* ---------- Stromkreis ---------- */
+const N_E = 30; // Elektronen im Kreis
+// Abgerundetes Rechteck, Start oben in der Mitte (Lampe), im Uhrzeigersinn
+const geoCache = new Map();
+function geometry(w, h) {
+  const key = w.toFixed(1) + 'x' + h.toFixed(1);
+  if (geoCache.has(key)) return geoCache.get(key);
+  const W = Math.max(9, Math.min(24, Math.min(w, h * 1.7) * 0.042));
+  const R = Math.max(17, Math.min(w * 0.09, h * 0.12));
+  const boxH = W * 2.9, boxW = Math.min(w * 0.3, 170);
+  const x0 = Math.max(w * 0.08, W + 10), x1 = w - x0;
+  const y0 = Math.max(h * 0.2, R + 26), y1 = h - Math.max(h * 0.15, boxH / 2 + 24);
+  const r = Math.min(x1 - x0, y1 - y0) * 0.2;
+  const cx = w / 2;
+  const segs = [];
+  const line = (ax, ay, bx, by) => segs.push({ t: 'l', ax, ay, bx, by, len: Math.hypot(bx - ax, by - ay) });
+  const arc = (ox, oy, a0, a1) => segs.push({ t: 'a', ox, oy, a0, a1, len: r * Math.abs(a1 - a0) });
+  const P = Math.PI;
+  line(cx, y0, x1 - r, y0); arc(x1 - r, y0 + r, -P / 2, 0);
+  line(x1, y0 + r, x1, y1 - r); arc(x1 - r, y1 - r, 0, P / 2);
+  line(x1 - r, y1, x0 + r, y1); arc(x0 + r, y1 - r, P / 2, P);
+  line(x0, y1 - r, x0, y0 + r); arc(x0 + r, y0 + r, P, 1.5 * P);
+  line(x0 + r, y0, cx, y0);
+  const L = segs.reduce((s, g) => s + g.len, 0);
+  const g = { W, R, boxW, boxH, x0, x1, y0, y1, r, cx, segs, L };
+  if (geoCache.size > 40) geoCache.clear();
+  geoCache.set(key, g);
+  return g;
+}
+function pointAt(g, t) {
+  let d = (((t % 1) + 1) % 1) * g.L;
+  for (const s of g.segs) {
+    if (d <= s.len) {
+      const f = s.len ? d / s.len : 0;
+      if (s.t === 'l') return [s.ax + (s.bx - s.ax) * f, s.ay + (s.by - s.ay) * f];
+      const a = s.a0 + (s.a1 - s.a0) * f;
+      return [s.ox + g.r * Math.cos(a), s.oy + g.r * Math.sin(a)];
+    }
+    d -= s.len;
+  }
+  return [g.cx, g.y0];
+}
+function tracePath(ctx, g) {
+  ctx.beginPath();
+  ctx.moveTo(g.segs[0].ax, g.segs[0].ay);
+  for (const s of g.segs) {
+    if (s.t === 'l') ctx.lineTo(s.bx, s.by);
+    else ctx.arc(s.ox, s.oy, g.r, s.a0, s.a1);
+  }
+  ctx.closePath();
+}
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function drawSymbol(ctx, mode, cx, cy, size, color, lw) {
+  const hw = size / 2;
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'butt';
+  ctx.beginPath();
+  if (mode === 'dc') {
+    const gap = size * 0.17, dl = size * 0.22, gp = (size - 3 * dl) / 2;
+    ctx.moveTo(cx - hw, cy - gap); ctx.lineTo(cx + hw, cy - gap);
+    for (let i = 0; i < 3; i++) { const x = cx - hw + i * (dl + gp); ctx.moveTo(x, cy + gap); ctx.lineTo(x + dl, cy + gap); }
+  } else {
+    const a = size * 0.24;
+    for (let i = 0; i <= 48; i++) {
+      const t = i / 48, x = cx - hw + t * size, y = cy - Math.sin(t * TAU) * a;
+      if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+    }
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+// st: { offsets:[Verschiebung in Runden], bright:0..1, flow:-1..1, mode, label }
+function drawCircuit(ctx, w, h, pal, st) {
+  const g = geometry(w, h);
+  ctx.clearRect(0, 0, w, h);
+  const b = Math.max(0, Math.min(1, st.bright));
+
+  if (b > 0.02) {
+    const rad = g.R * (1.5 + 3.6 * b);
+    const grd = ctx.createRadialGradient(g.cx, g.y0, g.R * 0.5, g.cx, g.y0, rad);
+    grd.addColorStop(0, rgba(pal.lamp, 0.85 * b));
+    grd.addColorStop(0.45, rgba(pal.lamp, 0.3 * b));
+    grd.addColorStop(1, rgba(pal.lamp, 0));
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(g.cx, g.y0, rad, 0, TAU); ctx.fill();
+  }
+
+  ctx.lineJoin = 'round';
+  tracePath(ctx, g);
+  ctx.strokeStyle = pal.copper; ctx.lineWidth = g.W; ctx.stroke();
+  ctx.strokeStyle = pal.copperHi; ctx.lineWidth = g.W * 0.6; ctx.stroke();
+
+  // Elektronen (mehrere Proben pro Bild = Bewegungsunschärfe)
+  const er = g.W * 0.24, K = st.offsets.length;
+  ctx.globalAlpha = Math.min(1, 2.2 / K);
+  ctx.fillStyle = pal.electron;
+  for (const u of st.offsets) {
+    ctx.beginPath();
+    for (let i = 1; i < N_E; i++) {
+      const [x, y] = pointAt(g, i / N_E + u);
+      ctx.moveTo(x + er, y); ctx.arc(x, y, er, 0, TAU);
+    }
+    ctx.fill();
+  }
+  ctx.fillStyle = pal.mark; ctx.strokeStyle = pal.electron; ctx.lineWidth = 1.5;
+  for (const u of st.offsets) {
+    const [x, y] = pointAt(g, u);
+    ctx.beginPath(); ctx.arc(x, y, er * 1.5, 0, TAU); ctx.fill(); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Lampe als Schaltzeichen (Kreis mit Kreuz)
+  ctx.beginPath(); ctx.arc(g.cx, g.y0, g.R, 0, TAU);
+  ctx.globalAlpha = 0.86; ctx.fillStyle = pal.panel; ctx.fill();
+  if (b > 0.01) { ctx.globalAlpha = b; ctx.fillStyle = pal.lamp; ctx.fill(); }
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = Math.max(2, g.W * 0.2); ctx.strokeStyle = pal.ink; ctx.stroke();
+  const k = g.R * 0.7;
+  ctx.beginPath();
+  ctx.moveTo(g.cx - k, g.y0 - k); ctx.lineTo(g.cx + k, g.y0 + k);
+  ctx.moveTo(g.cx + k, g.y0 - k); ctx.lineTo(g.cx - k, g.y0 + k);
+  ctx.stroke();
+
+  const fs = Math.max(11, Math.min(15, w * 0.022));
+  ctx.font = `600 ${fs}px ${pal.fontBody}`;
+  ctx.fillStyle = pal.muted; ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom'; ctx.fillText('Lampe', g.cx, g.y0 - g.R - 6);
+
+  // Quelle
+  const bw = g.boxW, bh = g.boxH, bx = g.cx - bw / 2, by = g.y1 - bh / 2;
+  roundRectPath(ctx, bx, by, bw, bh, Math.min(10, bh * 0.3));
+  ctx.fillStyle = pal.panel; ctx.fill();
+  ctx.lineWidth = 2.5; ctx.strokeStyle = pal.mode; ctx.stroke();
+  drawSymbol(ctx, st.mode, g.cx, g.y1, Math.min(bw * 0.42, bh * 1.05), pal.mode, Math.max(2.5, bh * 0.085));
+  ctx.fillStyle = pal.muted; ctx.textBaseline = 'top';
+  ctx.fillText(st.label || 'Generator', g.cx, by + bh + 6);
+
+  // Pfeile: In welche Richtung fliessen die Elektronen gerade?
+  const f = st.flow;
+  if (Math.abs(f) > 0.04) {
+    const dir = f > 0 ? -1 : 1; // im Uhrzeigersinn geht es unten nach links
+    const sz = Math.max(7, g.W * 0.55), cy = g.y1 - g.W * 1.55;
+    ctx.globalAlpha = Math.min(1, Math.abs(f) * 1.4);
+    ctx.strokeStyle = pal.mode; ctx.lineWidth = Math.max(2.5, g.W * 0.2); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const xc of [bx - sz * 2.2, bx + bw + sz * 2.2]) {
+      for (const off of [-0.6, 0.6]) {
+        const x = xc + off * sz * dir;
+        ctx.beginPath();
+        ctx.moveTo(x - dir * sz * 0.45, cy - sz * 0.65);
+        ctx.lineTo(x + dir * sz * 0.45, cy);
+        ctx.lineTo(x - dir * sz * 0.45, cy + sz * 0.65);
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1; ctx.lineCap = 'butt';
+  }
+}
+
+/* ---------- 1: Gleich- und Wechselstrom nebeneinander, stark verlangsamt ---------- */
+const DEMO_F = 0.5, DEMO_A = 0.05, DEMO_W = TAU * DEMO_F;
+const DEMO_DC = DEMO_A * DEMO_W * Math.SQRT1_2; // gleich viel Bewegung wie beim Pendeln
+const duo = ['duoDc', 'duoAc'].map(id => {
+  const el = document.getElementById(id), canvas = $('canvas', el);
+  watch(canvas);
+  return { el, canvas, mode: el.dataset.mode, u: 0, pal: null, palKey: '' };
+});
+let duoT = 0;
+function stepDuo(dt) {
+  duoT += dt;
+  duo[0].u = (duo[0].u + DEMO_DC * dt) % 1;
+}
+function drawDuo() {
+  for (const d of duo) {
+    const c = fit(d.canvas);
+    if (!c) continue;
+    const pal = paletteFor(d);
+    if (d.mode === 'dc') drawCircuit(c.ctx, c.w, c.h, pal, { offsets: [d.u], bright: Math.SQRT1_2, flow: Math.SQRT1_2, mode: 'dc', label: 'Batterie' });
+    else {
+      const ph = DEMO_W * duoT;
+      drawCircuit(c.ctx, c.w, c.h, pal, { offsets: [DEMO_A * Math.sin(ph)], bright: Math.abs(Math.cos(ph)), flow: Math.cos(ph), mode: 'ac', label: 'Generator' });
+    }
+  }
+}
+
+/* ---------- 3: Hertz zum Mitklatschen ---------- */
+const Sound = {
+  ctx: null, on: true,
+  ensure() {
+    if (!this.on) return null;
+    if (!this.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try { this.ctx = new AC(); } catch (_) { return null; }
+    }
+    if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+    return this.ctx;
+  },
+  click(at, short) {
+    const c = this.ctx; if (!c || !this.on) return;
+    const o = c.createOscillator(), g = c.createGain(), d = short ? 0.008 : 0.03;
+    o.type = 'square'; o.frequency.value = short ? 900 : 1300;
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(short ? 0.05 : 0.09, at + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + d);
+    o.connect(g); g.connect(c.destination);
+    o.start(at); o.stop(at + d + 0.01);
+  },
+};
+try { if (localStorage.getItem('saegewerk.sound') === '0') Sound.on = false; } catch (_) {}
+
+const met = { el: $('#metCanvas').closest('.side'), canvas: $('#metCanvas'), mode: 'ac', f: 0, t0: 0, a0: 0, nextK: 0, last: 0, pal: null, palKey: '' };
+watch(met.canvas);
+const metBtns = document.querySelectorAll('[data-hz]');
+function setMet(f) {
+  met.f = f;
+  const now = performance.now() / 1000;
+  met.t0 = now + 0.05; met.nextK = 0; met.last = now;
+  const c = f ? Sound.ensure() : null;
+  met.a0 = c ? c.currentTime + 0.05 : 0;
+  metBtns.forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.hz === f)));
+  $('#metTag').textContent = f + ' Hz';
+}
+metBtns.forEach(b => b.addEventListener('click', () => setMet(+b.dataset.hz)));
+const metSound = $('#metSound');
+function syncMetSound() { metSound.textContent = Sound.on ? 'Ton an' : 'Ton aus'; metSound.setAttribute('aria-pressed', String(Sound.on)); }
+metSound.addEventListener('click', () => {
+  Sound.on = !Sound.on;
+  try { localStorage.setItem('saegewerk.sound', Sound.on ? '1' : '0'); } catch (_) {}
+  syncMetSound();
+  if (Sound.on && met.f) setMet(met.f);
+});
+syncMetSound();
+
+function stepMet(now) {
+  if (!met.f) return;
+  // Klick jeweils am rechten Umkehrpunkt, im Voraus geplant für genaues Timing
+  const c = Sound.on ? Sound.ctx : null;
+  met.nextK = Math.max(met.nextK, Math.ceil((now - met.t0) * met.f - 0.25)); // verpasste Klicks (Tab im Hintergrund) nicht nachholen
+  while (met.t0 + (met.nextK + 0.25) / met.f < now + 0.1) {
+    if (c && met.a0) Sound.click(met.a0 + (met.nextK + 0.25) / met.f, met.f > 10);
+    met.nextK++;
+  }
+}
+function metCount(now) { return met.f ? Math.max(0, Math.floor((now - met.t0) * met.f - 0.25) + 1) : 0; }
+function drawMet(now) {
+  const c = fit(met.canvas);
+  if (!c) return;
+  const { ctx, w, h } = c, pal = paletteFor(met);
+  const prev = met.last; met.last = now;
+  ctx.clearRect(0, 0, w, h);
+  const pad = 26, top = 18, railY = 58, amp = (w - pad * 2) / 2 - 18, cx = w / 2;
+  const pos = t => (met.f && t > met.t0 ? Math.sin(TAU * met.f * (t - met.t0)) : 0);
+
+  // Schiene mit Umkehrpunkten
+  ctx.strokeStyle = pal.line; ctx.lineWidth = 6; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(cx - amp, railY); ctx.lineTo(cx + amp, railY); ctx.stroke();
+  ctx.font = `600 12px ${pal.fontMono}`; ctx.fillStyle = pal.muted; ctx.textBaseline = 'top';
+  ctx.textAlign = 'center'; ctx.fillText('her', cx - amp, railY + 18); ctx.fillText('hin', cx + amp, railY + 18);
+  ctx.fillStyle = pal.line;
+  for (const x of [cx - amp, cx + amp]) { ctx.beginPath(); ctx.arc(x, railY, 6, 0, TAU); ctx.fill(); }
+
+  // Kugel, bei hoher Frequenz verschmiert (mehrere Proben)
+  const K = met.f > 10 ? 16 : 1;
+  ctx.fillStyle = pal.mode;
+  ctx.globalAlpha = K > 1 ? 0.18 : 1;
+  for (let i = 0; i < K; i++) {
+    const t = K === 1 ? now : prev + (now - prev) * (i + 0.5) / K;
+    ctx.beginPath(); ctx.arc(cx + pos(t) * amp, railY, 14, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // Blitz beim Klick
+  if (met.f && met.f <= 10 && now > met.t0) {
+    const ph = ((met.f * (now - met.t0) - 0.25) % 1 + 1) % 1;
+    if (ph < 0.15) {
+      ctx.strokeStyle = pal.mode; ctx.lineWidth = 3; ctx.globalAlpha = 1 - ph / 0.15;
+      ctx.beginPath(); ctx.arc(cx + amp, railY, 14 + 30 * ph / 0.15, 0, TAU); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Die letzte Sekunde als Kurve
+  const sy = railY + 50, sh = h - sy - 22, mid = sy + sh / 2, a = sh / 2 - 3;
+  ctx.fillStyle = pal.plate; ctx.fillRect(pad, sy, w - pad * 2, sh);
+  ctx.strokeStyle = pal.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, Math.round(mid) + 0.5); ctx.lineTo(w - pad, Math.round(mid) + 0.5); ctx.stroke();
+  ctx.strokeStyle = pal.mode; ctx.lineWidth = met.f > 10 ? 1.2 : 2.5; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  const span = w - pad * 2;
+  for (let i = 0; i <= span; i++) {
+    const t = now - 1 + i / span, y = mid - pos(t) * a;
+    if (i) ctx.lineTo(pad + i, y); else ctx.moveTo(pad + i, y);
+  }
+  ctx.stroke();
+  ctx.fillStyle = pal.muted; ctx.font = `600 11px ${pal.fontMono}`; ctx.textBaseline = 'top';
+  ctx.textAlign = 'left'; ctx.fillText('vor 1 Sekunde', pad, sy + sh + 5);
+  ctx.textAlign = 'right'; ctx.fillText('jetzt', w - pad, sy + sh + 5);
+  void top;
+}
+
+/* ---------- 3: Steckdose in Zeitlupe ---------- */
+const FACTORS = [1, 2, 5, 10, 25, 50, 100];
+const F_NET = 50, OMEGA = TAU * F_NET;
+const AMP = 0.035;                       // Pendelweg der Elektronen (Runden)
+const C_DC = AMP * OMEGA * Math.SQRT1_2;  // gleich viel Leistung wie der Wechselstrom
+const slow = {
+  el: $('#slowSide'), circuit: $('#slowCircuit'), scope: $('#slowScope'),
+  mode: 'ac', idx: 5, tSim: 0, uDC: 0, power: 0, paused: false, offsets: [0], flow: 0, pal: null, palKey: '',
+};
+watch(slow.circuit); watch(slow.scope);
+function stepSlow(dt) {
+  const factor = FACTORS[slow.idx];
+  const t0 = slow.tSim, dts = slow.paused ? 0 : dt / factor, t1 = t0 + dts;
+  slow.tSim = t1;
+  let p;
+  const offs = [];
+  if (slow.mode === 'ac') {
+    const th0 = OMEGA * t0, th1 = OMEGA * t1, dth = th1 - th0;
+    // mittlere Leistung im Bildintervall (Strom ~ cos, Leistung ~ cos²)
+    p = dth > 1e-6 ? 0.5 + (Math.sin(2 * th1) - Math.sin(2 * th0)) / (4 * dth) : Math.cos(th1) ** 2;
+    const K = dth > 0.25 ? 14 : 1;
+    for (let k = 0; k < K; k++) {
+      const t = K === 1 ? t1 : t0 + dts * (k + 0.5) / K;
+      offs.push(AMP * Math.sin(OMEGA * t));
+    }
+    slow.flow = K === 1 ? Math.cos(th1) : 0;
+  } else {
+    p = 0.5;
+    const du = C_DC * dts, K = du > 0.006 ? 14 : 1;
+    for (let k = 0; k < K; k++) offs.push(slow.uDC + (K === 1 ? du : du * (k + 0.5) / K));
+    slow.uDC = (slow.uDC + du) % 1;
+    slow.flow = Math.SQRT1_2;
+  }
+  slow.offsets = offs;
+  // Das Auge mittelt über etwa 1/20 Sekunde
+  slow.power += (p - slow.power) * (1 - Math.exp(-dt / 0.05));
+}
+function drawScope(ctx, w, h, pal) {
+  const WIN = 2 / F_NET; // 40 ms = 2 Schwingungen
+  const factor = FACTORS[slow.idx];
+  ctx.fillStyle = pal.scope; ctx.fillRect(0, 0, w, h);
+  const top = 8, bottom = h - 20, mid = (top + bottom) / 2, amp = (bottom - top) / 2 - 4;
+  ctx.lineWidth = 1; ctx.strokeStyle = pal.scopeGrid;
+  ctx.beginPath();
+  for (let i = 0; i <= 8; i++) { const x = Math.round(i / 8 * w) + 0.5; ctx.moveTo(x, top); ctx.lineTo(x, bottom); }
+  for (const f of [-1, -0.5, 0.5, 1]) { const y = Math.round(mid - f * amp) + 0.5; ctx.moveTo(0, y); ctx.lineTo(w, y); }
+  ctx.stroke();
+  ctx.setLineDash([4, 4]); ctx.strokeStyle = pal.scopeText;
+  ctx.beginPath(); ctx.moveTo(0, Math.round(mid) + 0.5); ctx.lineTo(w, Math.round(mid) + 0.5); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const cur = t => (slow.mode === 'ac' ? Math.cos(OMEGA * t) : Math.SQRT1_2);
+  const X = t => (t / WIN) * w, Y = t => mid - cur(t) * amp;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.strokeStyle = rgba(pal.trace, 0.28); ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= 200; i++) { const t = i / 200 * WIN; if (i) ctx.lineTo(X(t), Y(t)); else ctx.moveTo(X(t), Y(t)); }
+  ctx.stroke();
+  // Leuchtspur des Strahls (Nachleuchten ~0.3 s)
+  const tb = slow.tSim % WIN, trail = Math.min(WIN * 0.995, 0.3 / factor), M = 70;
+  ctx.strokeStyle = pal.trace; ctx.lineWidth = 2.5;
+  for (let i = 1; i <= M; i++) {
+    let ta = tb - trail + trail * (i - 1) / M, tc = tb - trail + trail * i / M;
+    if (ta < 0 && tc >= 0) continue;
+    if (ta < 0) { ta += WIN; tc += WIN; }
+    ctx.globalAlpha = i / M;
+    ctx.beginPath(); ctx.moveTo(X(ta), Y(ta)); ctx.lineTo(X(tc), Y(tc)); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = pal.beam;
+  ctx.beginPath(); ctx.arc(X(tb), Y(tb), 4, 0, TAU); ctx.fill();
+
+  ctx.font = `500 10px ${pal.fontMono}`; ctx.fillStyle = pal.scopeText;
+  ctx.textBaseline = 'bottom';
+  for (let i = 0; i <= 4; i++) {
+    ctx.textAlign = i === 0 ? 'left' : i === 4 ? 'right' : 'center';
+    ctx.fillText(i * 10 + (i === 4 ? ' ms' : ''), i === 0 ? 5 : i === 4 ? w - 5 : i / 4 * w, h - 4);
+  }
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText('vorwärts', 7, top + 2);
+  ctx.textBaseline = 'bottom'; ctx.fillText('rückwärts', 7, bottom - 2);
+}
+function drawSlow() {
+  const pal = paletteFor(slow);
+  const c = fit(slow.circuit);
+  if (c) drawCircuit(c.ctx, c.w, c.h, pal, { offsets: slow.offsets, bright: Math.sqrt(Math.max(0, slow.power)), flow: slow.flow, mode: slow.mode, label: slow.mode === 'ac' ? 'Generator' : 'Akku' });
+  const sc = fit(slow.scope);
+  if (sc) drawScope(sc.ctx, sc.w, sc.h, pal);
+}
+const fmtNum = x => (Number.isInteger(x) ? String(x) : x.toFixed(1));
+function updateText(now) {
+  const factor = FACTORS[slow.idx];
+  $('#slowFactor').textContent = factor === 1 ? 'Echtzeit' : factor + '× langsamer';
+  if (slow.mode === 'ac') {
+    $('#slowReal').textContent = '50 Hz';
+    $('#slowSee').textContent = fmtNum(F_NET / factor) + ' pro Sekunde';
+    $('#slowCount').textContent = String(Math.floor(F_NET * slow.tSim + 1e-9));
+  } else {
+    $('#slowReal').textContent = '0 Hz';
+    $('#slowSee').textContent = 'nur vorwärts';
+    $('#slowCount').textContent = '–';
+  }
+  $('#slowTime').textContent = slow.tSim.toFixed(3) + ' s';
+  $('#metCount').textContent = String(metCount(now));
+  $('#metTime').textContent = (met.f ? Math.max(0, now - met.t0) : 0).toFixed(1) + ' s';
+}
+function setSlowMode(mode) {
+  slow.mode = mode; slow.el.dataset.mode = mode;
+  document.querySelectorAll('[data-src]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.src === mode)));
+}
+function setSlowIdx(idx) {
+  slow.idx = Math.max(0, Math.min(FACTORS.length - 1, idx | 0));
+  $('#slowSpeed').value = String(slow.idx);
+}
+document.querySelectorAll('[data-src]').forEach(b => b.addEventListener('click', () => setSlowMode(b.dataset.src)));
+$('#slowSpeed').addEventListener('input', e => setSlowIdx(+e.target.value));
+$('#slowPause').addEventListener('click', e => { slow.paused = !slow.paused; e.currentTarget.textContent = slow.paused ? 'Weiter' : 'Pause'; });
+$('#slowReset').addEventListener('click', () => { slow.tSim = 0; });
+
+/* ---------- Vollbild ---------- */
+const fsBtn = $('#fullscreen');
+if (!document.fullscreenEnabled || !root.requestFullscreen) fsBtn.hidden = true;
+fsBtn.addEventListener('click', () => {
+  if (document.fullscreenElement) { if (document.exitFullscreen) document.exitFullscreen().catch(() => {}); }
+  else root.requestFullscreen().catch(() => { fsBtn.hidden = true; });
+});
+document.addEventListener('fullscreenchange', () => { fsBtn.textContent = document.fullscreenElement ? 'Vollbild beenden' : 'Vollbild'; });
+
+/* ---------- Hauptschleife ---------- */
+let last = performance.now(), lastText = 0;
+function frame() {
+  const nowMs = performance.now(), now = nowMs / 1000;
+  const dt = Math.min(0.05, Math.max(0, (nowMs - last) / 1000));
+  last = nowMs;
+  stepDuo(dt);
+  stepSlow(dt);
+  stepMet(now);
+  drawDuo();
+  drawSlow();
+  drawMet(now);
+  if (now - lastText > 0.1) { updateText(now); lastText = now; }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

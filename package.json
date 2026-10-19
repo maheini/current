@@ -1,0 +1,16 @@
+{
+  "name": "saegewerk-panik",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sägewerk-Panik: Gleichstrom und Wechselstrom als Seilsäge, online zu zweit mit Zuschauermodus und Erklärseite für die Lehrperson.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

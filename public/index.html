@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sägewerk-Panik</title>
+<meta name="description" content="Gleichstrom und Wechselstrom als Seilsäge: Erklärmodus zum Steuern und ein Duell für zwei gegen die Uhr, alle anderen schauen zu.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="base.css">
+<style>
+.view{display:flex;flex-direction:column;gap:16px}
+
+/* Reiter */
+.tabs{display:flex;flex-wrap:wrap;gap:10px}
+.tab{display:inline-flex;align-items:center;gap:10px;padding:12px 20px;border-radius:10px;border:2px solid var(--line);background:var(--panel);cursor:pointer;font:800 1.35rem/1 var(--font-display);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.tab b{display:inline-grid;place-items:center;width:1.6em;height:1.6em;border-radius:50%;background:var(--plate);color:var(--ink);font-size:.95rem}
+.tab[aria-current="page"]{border-color:var(--ink);color:var(--ink)}
+.tab[aria-current="page"] b{background:var(--ink);color:var(--panel)}
+.tab:not([aria-current="page"]):hover{background:var(--plate)}
+
+/* Bühne */
+.stage{position:relative;width:100%;aspect-ratio:25/16;max-height:70vh}
+.stage canvas{display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none;touch-action:none}
+.role{font:800 1.2rem/1 var(--font-display);letter-spacing:.04em}
+.side .tag{font-size:1.05rem;padding:4px 8px;min-width:4.6em;text-align:center}
+
+/* Erklärmodus */
+.explain{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(280px,1fr);gap:16px;align-items:start}
+@media (max-width:1000px){.explain{grid-template-columns:minmax(0,1fr)}}
+.controls{display:flex;flex-direction:column;gap:14px}
+.controls .notehead{margin-bottom:0}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg .btn{background:transparent;color:var(--ink);border-color:var(--line)}
+.seg .btn[aria-pressed="true"].ac{background:var(--ac);border-color:var(--ac);color:var(--on-mode)}
+.seg .btn[aria-pressed="true"].dc{background:var(--dc);border-color:var(--dc);color:var(--on-mode)}
+.slider{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+.slider .k{grid-column:1/-1}
+.slider input{width:100%;accent-color:var(--ink)}
+.slider output{font:700 1.1rem/1 var(--font-mono);min-width:4.6em;text-align:right}
+.slider.off{opacity:.4}
+.facts{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+.facts div{min-width:0}
+.facts dt{font:600 .72rem/1.2 var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:2px 0 0;font:700 1.2rem/1.2 var(--font-mono)}
+.more{display:inline-flex;align-self:flex-start}
+
+/* Duell */
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.timer{font:800 clamp(2.6rem,6vw,4rem)/1 var(--font-mono);font-variant-numeric:tabular-nums;padding:6px 16px;border-radius:12px;background:var(--panel);border:2px solid var(--line)}
+.timer.hot{color:var(--bad);border-color:var(--bad)}
+.status{margin:0;color:var(--muted);font-weight:600;min-width:0;flex:1 1 260px;font-size:1.15rem}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--plate);border:1px solid var(--line);font-weight:600;color:var(--muted)}
+.joinbox{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 14px;padding:14px 18px;border-radius:var(--radius);background:var(--panel);border:2px dashed var(--line)}
+.joinbox .field{display:flex;flex-direction:column;gap:5px;min-width:0;flex:0 1 260px}
+.joinbox input{width:100%;min-width:0;padding:10px 12px;border-radius:8px;border:1.5px solid var(--line);background:var(--paper);font:600 1.1rem/1.2 var(--font-body)}
+.joinbox input:focus{outline:none;border-color:var(--focus)}
+.joinmsg{margin:0;flex:1 1 240px;align-self:center;font-weight:600;color:var(--muted)}
+.arena{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.arena{grid-template-columns:minmax(0,1fr)}}
+.player.me{outline:3px solid var(--mode);outline-offset:2px}
+.stats{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 24px;align-items:end;padding:12px 16px 14px;border-top:1px solid var(--line)}
+.stats .m{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ctl{font-size:.95rem;color:var(--muted);line-height:1.6}
+.slot-wait{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px;text-align:center;background:var(--panel);font-size:1.2rem;font-weight:600}
+.slot-wait b{font:800 clamp(2.2rem,5vw,3.6rem)/1 var(--font-display);text-transform:uppercase}
+.slot-wait span{color:var(--muted)}
+
+.lab{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.lab{grid-template-columns:minmax(0,1fr)}}
+.note ul{margin:0;padding-left:1.15em;display:grid;gap:8px;max-width:70ch}
+.ask{margin:0;padding:12px 14px;border-radius:8px;background:var(--plate);font-weight:600;max-width:70ch}
+.ask .k{display:block;margin-bottom:3px}
+.note .ask{margin-top:14px}
+.controls .ask{margin-top:0}
+td,th{white-space:nowrap}
+.arena.solo{grid-template-columns:minmax(0,1fr)}
+.arena.solo #pB{display:none}
+.arena.solo .stage{max-height:62vh}
+.chip.opp{color:var(--ink);font-size:1.05rem}
+.how{text-align:left;gap:12px;width:min(100%,600px)}
+.how .eyebrow,.how h2{text-align:center}
+.how .actions{justify-content:center}
+.howlist{margin:0;padding-left:1.15em;display:grid;gap:6px}
+.c-ok{color:var(--ok)}
+.demo{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--mode)}
+.demo p{margin:0;font-weight:700}
+.mouse{width:170px;height:100px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.mouse .body rect:first-child{fill:var(--panel)}
+.how[data-mode="ac"] .mouse .body{animation:swing 1s ease-in-out infinite alternate}
+.how[data-mode="ac"] .arr.w,.how[data-mode="dc"] .arr.l,.how[data-mode="dc"] .arr.r{display:none}
+.how[data-mode="dc"] .wheel{fill:currentColor;animation:spin .5s linear infinite}
+.how[data-mode="dc"] .arr.w{animation:blink .5s linear infinite alternate}
+@keyframes swing{from{transform:translateX(-14px)}to{transform:translateX(14px)}}
+@keyframes spin{from{transform:translateY(-2px)}to{transform:translateY(3px)}}
+@keyframes blink{from{opacity:.35}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.mouse *{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./">
+      <h1>Sägewerk-Panik</h1>
+      <p>Gleichstrom gegen Wechselstrom: Wer sägt in einer Minute mehr Stämme durch?</p>
+    </a>
+    <nav class="nav" aria-label="Seite">
+      <button class="btn ghost small" id="soundBtn" type="button" aria-pressed="true">Ton an</button>
+      <button class="btn ghost small" id="fullscreen" type="button">Vollbild</button>
+    </nav>
+  </header>
+
+  <nav class="tabs" aria-label="Teil wählen">
+    <button class="tab" id="tabDuel" type="button" aria-current="page"><b>1</b>Duell</button>
+    <button class="tab" id="tabExplain" type="button" aria-current="false"><b>2</b>Erklären</button>
+  </nav>
+
+  <!-- ===================== ERKLÄREN ===================== -->
+  <section class="view" id="explain" aria-label="Erklärmodus" hidden>
+    <div class="explain">
+      <article class="side" id="exPanel" data-mode="ac">
+        <header class="plate">
+          <span class="plate-title">Erklärmodus</span>
+          <span class="kind"><span class="role" id="exRole">Wechselstrom</span><span class="tag" id="exTag">1.0 Hz</span></span>
+        </header>
+        <div class="stage"><canvas id="exCanvas" aria-label="Seilsäge im Erklärmodus"></canvas></div>
+      </article>
+
+      <section class="note controls" aria-labelledby="ctlTitle">
+        <div class="notehead"><h2 id="ctlTitle">Säge steuern</h2></div>
+        <div class="seg" role="group" aria-label="Stromart">
+          <button class="btn ac" id="exAc" type="button" aria-pressed="true">Wechselstrom</button>
+          <button class="btn dc" id="exDc" type="button" aria-pressed="false">Gleichstrom</button>
+        </div>
+        <label class="slider" id="freqBox"><span class="k">Frequenz</span><input type="range" id="exFreq" min="0.2" max="10" step="0.1" value="1"><output id="exFreqOut">1.0 Hz</output></label>
+        <button class="btn ghost small" id="ex50" type="button">50 Hz wie die Steckdose</button>
+        <label class="slider"><span class="k">Stärke</span><input type="range" id="exPower" min="0" max="100" step="1" value="70"><output id="exPowerOut">70 %</output></label>
+        <dl class="facts">
+          <div><dt>Stromart</dt><dd id="exName">Wechselstrom</dd></div>
+          <div><dt>Frequenz</dt><dd id="exHz">1.0 Hz</dd></div>
+          <div><dt>Richtungswechsel pro Sekunde</dt><dd id="exFlips">2</dd></div>
+          <div><dt>Beispiel</dt><dd id="exExample">Generator, langsam</dd></div>
+        </dl>
+        <p class="ask" id="exText"></p>
+      </section>
+    </div>
+
+    <div class="lab">
+      <section class="note" aria-labelledby="seeTitle">
+        <div class="notehead"><h2 id="seeTitle">Was seht ihr?</h2></div>
+        <ul>
+          <li>Das Seil ist ein geschlossener Kreis, genau wie der Draht im Stromkreis. Es bewegt sich überall gleichzeitig.</li>
+          <li><b class="c-dc">Gleichstrom:</b> Das Seil läuft immer in die gleiche Richtung. Der gelbe Punkt fährt im Kreis herum.</li>
+          <li><b class="c-ac">Wechselstrom:</b> Das Seil fährt hin und her. Der gelbe Punkt kommt nie vom Fleck, und trotzdem wird gesägt.</li>
+          <li>Hertz zählt, wie oft das Seil pro Sekunde hin und her fährt. Der Strom aus der Steckdose schafft 50 Hz.</li>
+        </ul>
+        <p class="ask"><span class="k">Forscherfrage</span>Beim Wechselstrom kommt der gelbe Punkt nie an. Warum leuchtet die Lampe trotzdem?</p>
+      </section>
+      <section class="note" aria-labelledby="moreTitle">
+        <div class="notehead"><h2 id="moreTitle">Mehr dazu</h2></div>
+        <p>AC und DC erklärt, die Unterschiede, was Hertz bedeutet, Beispiele aus dem Alltag und ein Quiz.</p>
+        <a class="btn more" href="erklaerung.html">Alle Erklärungen</a>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== DUELL ===================== -->
+  <section class="view" id="duel" aria-label="Duell">
+    <div class="bar">
+      <div class="timer" id="timer" aria-label="Restzeit">1:00</div>
+      <p class="status" id="status" aria-live="polite">Verbinde mit dem Server …</p>
+      <span class="chip opp" id="oppChip" hidden></span>
+      <span class="chip" id="viewerChip" hidden></span>
+    </div>
+
+    <div class="joinbox" id="joinBox">
+      <div class="field" id="nameField">
+        <label class="k" for="nameInput">Dein Name</label>
+        <input id="nameInput" maxlength="16" autocomplete="off" placeholder="z. B. Lena">
+      </div>
+      <button class="btn" id="readyBtn" type="button">Mitspielen</button>
+      <button class="btn ghost" id="watchBtn" type="button" hidden>Zuschauen</button>
+      <p class="joinmsg" id="joinMsg"></p>
+    </div>
+
+    <div class="arena" id="arena">
+      <article class="side player" id="pA" data-mode="ac">
+        <header class="plate">
+          <span class="plate-title" data-name>Platz frei</span>
+          <span class="kind"><span class="role" data-role>Wechselstrom</span></span>
+        </header>
+        <div class="stage">
+          <canvas aria-label="Sägewerk links"></canvas>
+          <div class="slot-wait" data-wait hidden><b>Platz frei</b><span>Name eingeben und auf Mitspielen klicken</span></div>
+        </div>
+        <div class="stats">
+          <div class="m"><span class="k">Stämme</span><span class="v" data-cuts>0</span></div>
+          <div class="m"><span class="k">Steuerung</span><span class="ctl" data-ctl></span></div>
+        </div>
+      </article>
+
+      <article class="side player" id="pB" data-mode="dc">
+        <header class="plate">
+          <span class="plate-title" data-name>Platz frei</span>
+          <span class="kind"><span class="role" data-role>Gleichstrom</span></span>
+        </header>
+        <div class="stage">
+          <canvas aria-label="Sägewerk rechts"></canvas>
+          <div class="slot-wait" data-wait hidden><b>Platz frei</b><span>Name eingeben und auf Mitspielen klicken</span></div>
+        </div>
+        <div class="stats">
+          <div class="m"><span class="k">Stämme</span><span class="v" data-cuts>0</span></div>
+          <div class="m"><span class="k">Steuerung</span><span class="ctl" data-ctl></span></div>
+        </div>
+      </article>
+
+      <div class="overlay result" id="howTo" hidden>
+        <div class="card how" id="howCard" role="dialog" aria-labelledby="howRole">
+          <p class="eyebrow">Du sägst mit</p>
+          <h2 id="howRole">Wechselstrom</h2>
+          <div class="demo" aria-hidden="true">
+            <svg viewBox="0 0 120 70" class="mouse"><g class="body"><rect x="44" y="6" width="32" height="54" rx="16"/><path d="M44 26h32M60 6v20"/><rect class="wheel" x="56" y="11" width="8" height="12" rx="4"/></g><path class="arr l" d="M30 33h-18m6-7-6 7 6 7"/><path class="arr r" d="M90 33h18m-6-7 6 7-6 7"/><path class="arr w" d="M86 14a10 10 0 1 1 0 14m0 0v-7m0 7h7"/></svg>
+            <p id="howCtl">Maus hin und her bewegen</p>
+          </div>
+          <ul class="howlist">
+            <li id="howGoal">Ziel: In einer Minute mehr Stämme durchsägen als die andere Person.</li>
+            <li>Erst sägen, wenn die Ampel <b class="c-ok">grün</b> ist. Sonst blockiert der Stamm.</li>
+            <li>Bei <b>STOPP! NAGEL!</b> nichts bewegen, bis der Magnet ihn herausgezogen hat.</li>
+            <li id="howWhy"></li>
+          </ul>
+          <div class="actions">
+            <button class="btn" id="howReady" type="button">Bereit</button>
+            <button class="btn ghost" id="howWatch" type="button">Doch nur zuschauen</button>
+          </div>
+        </div>
+      </div>
+      <div class="overlay countdown" id="countdown" hidden><span id="countText">3</span></div>
+      <div class="overlay result" id="result" hidden>
+        <div class="card" id="resultCard" role="dialog" aria-labelledby="resultTitle">
+          <p class="eyebrow" id="resultRound">Runde 1</p>
+          <h2 id="resultTitle">Fertig!</h2>
+          <p id="resultText"></p>
+          <div class="actions">
+            <button class="btn" id="againBtn" type="button">Revanche: Bereit</button>
+            <button class="btn ghost" id="closeResult" type="button">Schliessen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lab">
+      <section class="note" aria-labelledby="howTitle">
+        <div class="notehead"><h2 id="howTitle">So geht das Duell</h2></div>
+        <ul>
+          <li>Zwei spielen gegeneinander, alle anderen schauen zu. Wer zuerst Namen eingibt und auf Mitspielen klickt, bekommt einen Platz, liest die Anleitung und klickt auf Bereit.</li>
+          <li><b class="c-ac">Wechselstrom:</b> Maus nach links und rechts bewegen. <b class="c-dc">Gleichstrom:</b> Mausrad drehen, immer in die gleiche Richtung.</li>
+          <li>Eine Minute Zeit. Wer dann mehr Stämme durchgesägt hat, gewinnt. Nach jeder Runde wird die Stromart getauscht.</li>
+          <li>Erst sägen, wenn die Ampel grün ist. Wer sägt, während der Stamm noch rollt, blockiert ihn.</li>
+          <li>Steckt ein Nagel im Holz, heisst es <b>Stopp!</b> Nichts bewegen, bis der Magnet ihn herausgezogen hat. Sonst reisst das Seil.</li>
+        </ul>
+      </section>
+      <section class="note" aria-labelledby="roundsTitle">
+        <div class="notehead"><h2 id="roundsTitle">Rundenliste</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Runde</th><th scope="col" class="c-ac">Wechselstrom</th><th scope="col" class="c-dc">Gleichstrom</th><th scope="col">Sieg</th></tr></thead>
+            <tbody id="roundsBody"><tr><td class="empty" colspan="4">Noch keine Runde gespielt.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </section>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
