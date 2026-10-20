@@ -34,6 +34,19 @@ const server = http.createServer((req, res) => {
   p = ALIASES[p] || p;
   const file = path.normalize(path.join(PUBLIC, p));
   if (!file.startsWith(PUBLIC + path.sep)) { res.writeHead(403); res.end(); return; }
+  if (path.extname(file) === '.html') {
+    fs.readFile(file, 'utf8', (err, html) => {
+      if (err) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end('Nicht gefunden'); return; }
+      // neue Version von JS/CSS = neue URL, damit kein Browser oder Proxy alte Dateien behält
+      html = html.replace(/(src|href)="(game\.js|base\.css)"/g, (m, a, f) => {
+        let v = 0; try { v = Math.floor(fs.statSync(path.join(PUBLIC, f)).mtimeMs); } catch (_) {}
+        return `${a}="${f}?v=${v}"`;
+      });
+      res.writeHead(200, { 'Content-Type': TYPES['.html'], 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+      res.end(req.method === 'HEAD' ? undefined : html);
+    });
+    return;
+  }
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });

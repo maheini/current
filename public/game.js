@@ -722,12 +722,13 @@ function drawCircuit(ctx, P, view, fx, o) {
 
 function drawScene(c, view, sched, fx, o) {
   const P = palette(), { ctx, w, h } = c;
-  const s = Math.min(w / VW, h / VH);
+  const vh = o.circuit === false ? STRIP_Y : VH;   // im Duell nur die Säge, ohne Stromkreis
+  const s = Math.min(w / VW, h / vh);
   ctx.clearRect(0, 0, w, h);
   ctx.save();
-  ctx.translate((w - VW * s) / 2, (h - VH * s) / 2);
+  ctx.translate((w - VW * s) / 2, (h - vh * s) / 2);
   ctx.scale(s, s);
-  ctx.beginPath(); ctx.rect(0, 0, VW, VH); ctx.clip();
+  ctx.beginPath(); ctx.rect(0, 0, VW, vh); ctx.clip();
   ctx.save();
   if (fx.shake > 0) ctx.translate((Math.random() - 0.5) * 30 * fx.shake, (Math.random() - 0.5) * 30 * fx.shake);
   ctx.beginPath(); ctx.rect(0, 0, VW, STRIP_Y); ctx.clip();
@@ -802,7 +803,7 @@ function drawScene(c, view, sched, fx, o) {
     ctx.restore();
   }
   ctx.restore();
-  drawCircuit(ctx, P, view, fx, o);
+  if (o.circuit !== false) drawCircuit(ctx, P, view, fx, o);
   ctx.restore();
 }
 
@@ -1278,7 +1279,7 @@ function drawPanel(p, slot, T, dt) {
   if (mine) Sound.saw('me', current === 'duel' ? p.fx.speed : 0);
   if (empty) return;
   const c = fit(p.canvas);
-  if (c) drawScene(c, view, sched, p.fx, { role, mouse: true, who: role === 'ac' ? 'AC' : 'DC', hint, tag });
+  if (c) drawScene(c, view, sched, p.fx, { role, mouse: true, circuit: false, hint, tag });
 }
 
 // Maus: Wechselstrom mit der Bewegung, Gleichstrom mit dem Rad
