@@ -605,14 +605,18 @@ function drawSignal(ctx, P, view) {
 
 function drawHud(ctx, P, view, o) {
   const col = o.role === 'ac' ? P.ac : P.dc;
-  const label = ROLE_NAME[o.role].toUpperCase();
-  ctx.font = `800 26px ${P.fontDisplay}`;
-  const tw = ctx.measureText(label).width;
-  roundRect(ctx, 16, 14, tw + 66, 42, 9); ctx.fillStyle = col; ctx.fill();
-  drawSym(ctx, o.role, 39, 35, 28, P.onMode, 3.5);
-  ctx.fillStyle = P.onMode; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  ctx.fillText(label, 62, 36);
-  ctx.textBaseline = 'alphabetic';
+  // Im Duell bleibt die Stromart ungenannt (label: false), erst die Simulation zeigt sie
+  const named = o.label !== false;
+  if (named) {
+    const label = ROLE_NAME[o.role].toUpperCase();
+    ctx.font = `800 26px ${P.fontDisplay}`;
+    const tw = ctx.measureText(label).width;
+    roundRect(ctx, 16, 14, tw + 66, 42, 9); ctx.fillStyle = col; ctx.fill();
+    drawSym(ctx, o.role, 39, 35, 28, P.onMode, 3.5);
+    ctx.fillStyle = P.onMode; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, 62, 36);
+  }
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   if (o.showHz) {
     ctx.font = `700 40px ${P.fontMono}`; ctx.fillStyle = col;
     ctx.fillText(o.role === 'ac' ? fmtHz(o.hz) : '0 Hz', 16, 104);
@@ -620,7 +624,7 @@ function drawHud(ctx, P, view, o) {
     ctx.fillText(o.role === 'ac' ? 'so oft pro Sekunde hin und her' : 'nie umgekehrt: immer vorwärts', 16, 129);
   } else {
     ctx.font = `600 19px ${P.fontBody}`; ctx.fillStyle = P.muted;
-    ctx.fillText(o.role === 'ac' ? 'Seil fährt hin und her' : 'Seil läuft immer vorwärts', 16, 84);
+    ctx.fillText(o.role === 'ac' ? 'Seil fährt hin und her' : 'Seil läuft immer vorwärts', 16, named ? 84 : 40);
   }
   ctx.textAlign = 'right';
   ctx.font = `700 15px ${P.fontBody}`; ctx.fillStyle = P.muted; ctx.fillText('STÄMME', 984, 30);
@@ -1026,7 +1030,7 @@ function stepExplain(dt) {
 const D = {
   ws: null, open: false, wanted: false, retry: 0,
   you: -1, state: 'lobby', round: 0, dur: 60, players: [null, null], viewers: 0, history: [],
-  phase: 'lobby', roles: ['ac', 'dc'], startAt: 0, sched: null, saw: null, practice: null,
+  phase: 'lobby', roles: ['ac', 'dc'], startAt: 0, sched: null, saw: null, practice: null, sim: false,
   remote: [new Remote(), new Remote()], sendAcc: 0, doneSent: false, result: null, lastCount: 0, overAt: 0,
 };
 const idleSched = new Schedule(1, true);
@@ -1075,7 +1079,7 @@ function onMessage(m) {
     if (D.you >= 0) joinMsg.textContent = '';
     renderRounds();
     render();
-    if (was < 0 && D.you >= 0) focusGame();
+    if (was < 0 && D.you >= 0) { if (D.sim) setSim(false); focusGame(); }
   } else if (m.t === 'start') {
     toLobby();
     Object.assign(D, { phase: 'countdown', round: m.round, roles: m.roles, dur: m.dur, startAt: performance.now() + m.delay, sendAcc: 0, doneSent: false, lastCount: 0 });
@@ -1084,7 +1088,7 @@ function onMessage(m) {
     D.remote.forEach(r => r.reset());
     if (D.you >= 0) D.saw = new Sawyer(D.roles[D.you], D.sched, true, { limit: D.dur });
     render();
-    if (D.you >= 0) focusGame();
+    if (D.you >= 0) { if (D.sim) setSim(false); focusGame(); }
   } else if (m.t === 'peer') {
     if (D.phase !== 'lobby') D.remote[m.slot].push(m.s);
   } else if (m.t === 'result') {
@@ -1116,8 +1120,8 @@ function showResult(m) {
   card.dataset.mode = m.winner >= 0 ? m.roles[m.winner] : '';
   setText($('#resultRound'), 'Runde ' + m.n);
   setText($('#resultTitle'), m.winner < 0 ? 'Unentschieden!' : m.winner === D.you ? 'Du gewinnst!' : m.names[m.winner] + ' gewinnt!');
-  const line = i => `${m.names[i]} (${ROLE_NAME[m.roles[i]]}): ${m.cuts[i]} ${m.cuts[i] === 1 ? 'Stamm' : 'Stämme'}`;
-  setText($('#resultText'), line(0) + ' · ' + line(1) + '. Nächste Runde wird die Stromart getauscht.');
+  const line = i => `${m.names[i]}: ${m.cuts[i]} ${m.cuts[i] === 1 ? 'Stamm' : 'Stämme'}`;
+  setText($('#resultText'), line(0) + ' · ' + line(1) + '. Nächste Runde wird die Steuerung getauscht.');
   $('#againBtn').hidden = D.you < 0;
   $('#result').hidden = false;
 }
@@ -1168,14 +1172,17 @@ function render() {
   if (how) {
     const role = roleOf(D.you);
     $('#howCard').dataset.mode = role;
-    setText($('#howRole'), ROLE_NAME[role]);
-    setText($('#howCtl'), role === 'ac' ? 'Maus hin und her bewegen: Das Seil fährt hin und her.' : 'Mausrad drehen, immer weiter: Das Seil läuft im Kreis.');
+    setText($('#howRole'), role === 'ac' ? 'Maus hin und her' : 'Mausrad drehen');
+    setText($('#howCtl'), role === 'ac' ? 'Das Seil fährt mit der Maus hin und her.' : 'Immer weiter drehen: Das Seil läuft im Kreis.');
     setText($('#howGoal'), `Ziel: In einer Minute mehr Stämme durchsägen als ${other ? other.name : 'die andere Person'}.`);
-    setText($('#howWhy'), role === 'ac' ? 'Wechselstrom wechselt dauernd die Richtung, sägt aber trotzdem.' : 'Gleichstrom fliesst immer in die gleiche Richtung.');
+    setText($('#howWhy'), 'Nach jeder Runde wird die Steuerung getauscht.');
   }
-  $('#arena').classList.toggle('solo', !!me);
+  $('#arena').classList.toggle('solo', !!me && !D.sim);
+  $('#arena').classList.toggle('sim', D.sim);
+  simBtn.disabled = !!me && busy();   // die eigene Runde nicht aus Versehen verlassen
   let st;
-  if (!D.open) st = D.retry ? 'Keine Verbindung. Neuer Versuch …' : 'Verbinde mit dem Server …';
+  if (D.sim) st = 'Simulation: Beide Sägen laufen von selbst. Achtet auf den gelben Punkt am Seil!';
+  else if (!D.open) st = D.retry ? 'Keine Verbindung. Neuer Versuch …' : 'Verbinde mit dem Server …';
   else if (D.phase === 'countdown') st = 'Achtung, gleich geht es los!';
   else if (D.phase === 'play') st = `${nameOf(0)} gegen ${nameOf(1)}: Wer sägt mehr Stämme?`;
   else if (D.phase === 'over' && D.result) st = D.result.winner < 0 ? 'Unentschieden!' : D.result.names[D.result.winner] + ' gewinnt!';
@@ -1242,14 +1249,15 @@ function stepDuel(now, dt) {
   // Zuschauer: nach dem Ergebnis irgendwann zurück zur Wartebühne
   if (D.phase === 'over' && D.you < 0 && now - D.overAt > 12000) toLobby();
   // Übungssäge in der Wartezeit
-  if (D.phase === 'lobby' && D.you >= 0) {
+  if (D.phase === 'lobby' && D.you >= 0 && !D.sim) {
     const role = roleOf(D.you);
     if (!D.practice || D.practice.role !== role) D.practice = new Sawyer(role, new Schedule(newSeed(), true), true);
     D.practice.step(dt);
   }
   const oc = $('#oppChip'), ot = oppText();
   oc.hidden = !ot; setText(oc, ot);
-  panels.forEach((p, i) => { if (i === 0 || D.you < 0) drawPanel(p, slotFor(i), T, dt); });
+  if (D.sim) { SIM.dt = dt; stepSim(dt); panels.forEach(drawSimPanel); Sound.saw('me', 0); }
+  else panels.forEach((p, i) => { if (i === 0 || D.you < 0) drawPanel(p, slotFor(i), T, dt); });
 }
 
 function drawPanel(p, slot, T, dt) {
@@ -1257,7 +1265,7 @@ function drawPanel(p, slot, T, dt) {
   p.el.dataset.mode = role;
   p.el.classList.toggle('me', mine);
   setText(p.name, pl ? pl.name + (D.phase === 'lobby' && pl.ready ? ' ✓' : '') : 'Platz frei');
-  setText(p.role, ROLE_NAME[role]);
+  setText(p.role, '');
   setText(p.ctl, CTL[role]);
   const empty = !pl && D.phase === 'lobby';
   p.wait.hidden = !empty;
@@ -1270,7 +1278,7 @@ function drawPanel(p, slot, T, dt) {
     sched = D.sched;
     if (mine && D.saw) view = sawView(D.saw);
     else view = D.remote[slot].sample(D.phase === 'over' ? D.dur : T - CFG.DELAY) || idleView();
-    if (D.phase === 'countdown') hint = { big: ROLE_NAME[role].toUpperCase(), small: CTL[role] };
+    if (D.phase === 'countdown') hint = { big: role === 'ac' ? 'MAUS HIN UND HER' : 'MAUSRAD DREHEN', small: 'Gleich geht es los!' };
     if (D.result) view = Object.assign({}, view, { c: D.result.cuts[slot] });
   }
   const key = D.phase + '|' + slot + '|' + D.round + '|' + (mine && D.practice ? 'p' : '');
@@ -1281,17 +1289,60 @@ function drawPanel(p, slot, T, dt) {
   if (mine) Sound.saw('me', current === 'duel' ? p.fx.speed : 0);
   if (empty) return;
   const c = fit(p.canvas);
-  if (c) drawScene(c, view, sched, p.fx, { role, mouse: true, circuit: false, hint, tag });
+  if (c) drawScene(c, view, sched, p.fx, { role, mouse: true, circuit: false, label: false, hint, tag });
+}
+
+/* ---------- Simulation: beide Sägen laufen von selbst nebeneinander ----------
+   Niemand steuert. Links Wechselstrom (hin und her), rechts Gleichstrom (im Kreis),
+   beide mit gleich viel Seilweg pro Sekunde und den gleichen Stämmen: Sie sägen gleich schnell. */
+const SIM = { phase: 0, sched: null, saws: null, fx: [makeFx(), makeFx()] };
+const SIM_F = 1, SIM_A = 1;
+const simBtn = $('#simBtn');
+function setSim(on) {
+  D.sim = on;
+  if (on) {
+    SIM.sched = new Schedule(7, true, { interval: 6, nails: false });
+    SIM.saws = ['ac', 'dc'].map(r => new Sawyer(r, SIM.sched, true, { calm: true, direct: true }));
+    SIM.phase = 0;
+    SIM.fx.forEach(resetFx);
+  }
+  panels.forEach(p => { p.fx.prev = null; });
+  simBtn.setAttribute('aria-pressed', String(on));
+  simBtn.textContent = on ? 'Zurück zum Spiel' : 'Simulation';
+  render();
+}
+simBtn.addEventListener('click', () => { Sound.ensure(); setSim(!D.sim); });
+function stepSim(dt) {
+  const [ac, dc] = SIM.saws;
+  SIM.phase = (SIM.phase + TAU * SIM_F * dt) % TAU;
+  const q = SIM_A * Math.sin(SIM.phase);
+  ac.pulled(Math.abs(q - ac.q)); ac.q = q;
+  const d = 4 * SIM_A * SIM_F * dt;
+  dc.q += d; dc.pulled(d);
+  ac.step(dt); dc.step(dt);
+}
+function drawSimPanel(p, i) {
+  const s = SIM.saws[i], role = s.role, dt = SIM.dt;
+  p.el.dataset.mode = role;
+  p.el.classList.remove('me');
+  setText(p.name, ROLE_NAME[role]);
+  setText(p.role, role === 'ac' ? 'AC' : 'DC');
+  p.wait.hidden = true;
+  const view = sawView(s); view.x = 0;
+  setText(p.cuts, String(view.c));
+  updateFx(SIM.fx[i], view, SIM.sched, dt, { events: true });
+  const c = fit(p.canvas);
+  if (c) drawScene(c, view, SIM.sched, SIM.fx[i], { role, circuit: false });
 }
 
 // Maus: Wechselstrom mit der Bewegung, Gleichstrom mit dem Rad
-const mySaw = () => (current !== 'duel' || D.you < 0 ? null : D.phase === 'play' ? D.saw : D.phase === 'lobby' ? D.practice : null);
+const mySaw = () => (current !== 'duel' || D.you < 0 || D.sim ? null : D.phase === 'play' ? D.saw : D.phase === 'lobby' ? D.practice : null);
 window.addEventListener('mousemove', e => {
   const s = mySaw();
   if (s && s.role === 'ac' && e.movementX) s.move(clamp(e.movementX * CFG.MOUSE, -1, 1));
 });
 // Wer spielt, dem scrollt die Seite nie weg, auch wenn die Maus neben der Säge ist. Nur bei offener Anleitung oder Ergebnis darf man scrollen.
-const lockScroll = () => current === 'duel' && D.you >= 0 && (busy() || (D.phase === 'lobby' && $('#howTo').hidden));
+const lockScroll = () => current === 'duel' && D.you >= 0 && !D.sim && (busy() || (D.phase === 'lobby' && $('#howTo').hidden));
 // Uhr, Knöpfe und Säge ganz ins Bild holen, weil danach nicht mehr gescrollt werden kann
 function focusGame() {
   if (current === 'duel') requestAnimationFrame(() => $('#duel .bar').scrollIntoView({ block: 'start', behavior: 'smooth' }));

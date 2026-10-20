@@ -80,6 +80,8 @@ td,th{white-space:nowrap}
 .arena.solo #pB{display:none}
 .arena.solo .stage{max-height:max(240px,calc(100vh - 280px))}
 .arena.solo .stats{display:none}
+.arena.sim .stats,.arena.sim .overlay{display:none}
+#simBtn[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 #duel .bar{scroll-margin-top:12px}
 .chip.opp{color:var(--ink);font-size:1.05rem}
 .how{text-align:left;gap:12px;width:min(100%,600px)}
@@ -175,6 +177,7 @@ td,th{white-space:nowrap}
       <p class="status" id="status" aria-live="polite">Verbinde mit dem Server …</p>
       <span class="chip opp" id="oppChip" hidden></span>
       <span class="chip" id="viewerChip" hidden></span>
+      <button class="btn ghost small" id="simBtn" type="button" aria-pressed="false">Simulation</button>
     </div>
 
     <div class="joinbox" id="joinBox">
@@ -220,7 +223,7 @@ td,th{white-space:nowrap}
 
       <div class="overlay result" id="howTo" hidden>
         <div class="card how" id="howCard" role="dialog" aria-labelledby="howRole">
-          <p class="eyebrow">Du sägst mit</p>
+          <p class="eyebrow">So sägst du</p>
           <h2 id="howRole">Wechselstrom</h2>
           <div class="demo" aria-hidden="true">
             <svg viewBox="0 0 120 70" class="mouse"><g class="body"><rect x="44" y="6" width="32" height="54" rx="16"/><path d="M44 26h32M60 6v20"/><rect class="wheel" x="56" y="11" width="8" height="12" rx="4"/></g><path class="arr l" d="M30 33h-18m6-7-6 7 6 7"/><path class="arr r" d="M90 33h18m-6-7 6 7-6 7"/><path class="arr w" d="M86 14a10 10 0 1 1 0 14m0 0v-7m0 7h7"/></svg>
