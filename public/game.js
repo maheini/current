@@ -725,12 +725,12 @@ function drawCircuit(ctx, P, view, fx, o) {
 }
 
 function drawScene(c, view, sched, fx, o) {
-  const P = palette(), { ctx, w, h } = c;
+  const P = palette(), { ctx, w, h } = c, ox = c.x || 0;   // ox: zweite Säge daneben (Simulation)
   const vh = o.circuit === false ? STRIP_Y : VH;   // im Duell nur die Säge, ohne Stromkreis
   const s = Math.min(w / VW, h / vh);
-  ctx.clearRect(0, 0, w, h);
+  ctx.clearRect(ox, 0, w, h);
   ctx.save();
-  ctx.translate((w - VW * s) / 2, (h - vh * s) / 2);
+  ctx.translate(ox + (w - VW * s) / 2, (h - vh * s) / 2);
   ctx.scale(s, s);
   ctx.beginPath(); ctx.rect(0, 0, VW, vh); ctx.clip();
   ctx.save();
@@ -1077,7 +1077,6 @@ function onMessage(m) {
     Object.assign(D, { you: m.you, state: m.state, round: m.round, dur: m.dur, players: m.players, viewers: m.viewers, history: m.history });
     if (was !== D.you) { D.howSeen = false; panels.forEach(p => { resetFx(p.fx); p.key = ''; }); if (D.you < 0) D.practice = null; }
     if (D.you >= 0) joinMsg.textContent = '';
-    renderRounds();
     render();
     if (was < 0 && D.you >= 0) { if (D.sim) setSim(false); focusGame(); }
   } else if (m.t === 'start') {
@@ -1177,7 +1176,7 @@ function render() {
     setText($('#howGoal'), `Ziel: In einer Minute mehr Stämme durchsägen als ${other ? other.name : 'die andere Person'}.`);
     setText($('#howWhy'), 'Nach jeder Runde wird die Steuerung getauscht.');
   }
-  $('#arena').classList.toggle('solo', !!me && !D.sim);
+  $('#arena').classList.toggle('solo', !!me);
   $('#arena').classList.toggle('sim', D.sim);
   simBtn.disabled = !!me && busy();   // die eigene Runde nicht aus Versehen verlassen
   let st;
@@ -1196,21 +1195,6 @@ function render() {
   setText(chip, D.viewers === 1 ? '1 Person schaut zu' : D.viewers + ' Personen schauen zu');
   if (!me && free === 0 && D.open && !joinMsg.textContent) joinMsg.textContent = 'Beide Plätze sind besetzt. Du schaust zu, bis einer frei wird.';
   if (!me && free > 0 && joinMsg.textContent.startsWith('Beide Plätze')) joinMsg.textContent = '';
-}
-function renderRounds() {
-  const body = $('#roundsBody');
-  body.textContent = '';
-  if (!D.history.length) { body.innerHTML = '<tr><td class="empty" colspan="4">Noch keine Runde gespielt.</td></tr>'; return; }
-  for (const h of D.history.slice().reverse()) {
-    const tr = document.createElement('tr');
-    const cell = (txt, cls) => { const td = document.createElement('td'); td.textContent = txt; if (cls) td.className = cls; tr.appendChild(td); };
-    const ai = h.roles.indexOf('ac'), di = 1 - ai;
-    cell(String(h.n));
-    cell(`${h.names[ai]} · ${h.cuts[ai]}`, h.winner === ai ? 'win' : '');
-    cell(`${h.names[di]} · ${h.cuts[di]}`, h.winner === di ? 'win' : '');
-    cell(h.winner < 0 ? 'Unentschieden' : h.names[h.winner]);
-    body.appendChild(tr);
-  }
 }
 
 const fmtTime = s => { const n = Math.max(0, Math.ceil(s)); return Math.floor(n / 60) + ':' + String(n % 60).padStart(2, '0'); };
@@ -1256,7 +1240,13 @@ function stepDuel(now, dt) {
   }
   const oc = $('#oppChip'), ot = oppText();
   oc.hidden = !ot; setText(oc, ot);
-  if (D.sim) { SIM.dt = dt; stepSim(dt); panels.forEach(drawSimPanel); Sound.saw('me', 0); }
+  if (D.sim) {
+    stepSim(dt);
+    const views = SIM.saws.map((s, i) => { const v = sawView(s); v.x = 0; updateFx(SIM.fx[i], v, SIM.sched, dt, { events: true }); return v; });
+    // Das Spielfenster bleibt gleich gross: Spieler sehen beide Sägen im eigenen Fenster, Zuschauer in ihren zwei Fenstern
+    if (D.you >= 0) drawSimSolo(panels[0], views); else panels.forEach((p, i) => drawSimPanel(p, i, views));
+    Sound.saw('me', 0);
+  }
   else panels.forEach((p, i) => { if (i === 0 || D.you < 0) drawPanel(p, slotFor(i), T, dt); });
 }
 
@@ -1321,18 +1311,27 @@ function stepSim(dt) {
   dc.q += d; dc.pulled(d);
   ac.step(dt); dc.step(dt);
 }
-function drawSimPanel(p, i) {
-  const s = SIM.saws[i], role = s.role, dt = SIM.dt;
+function drawSimPanel(p, i, views) {
+  const role = SIM.saws[i].role;
   p.el.dataset.mode = role;
-  p.el.classList.remove('me');
   setText(p.name, ROLE_NAME[role]);
   setText(p.role, role === 'ac' ? 'AC' : 'DC');
+  setText(p.cuts, String(views[i].c));
+  setText(p.ctl, 'Läuft von selbst');
   p.wait.hidden = true;
-  const view = sawView(s); view.x = 0;
-  setText(p.cuts, String(view.c));
-  updateFx(SIM.fx[i], view, SIM.sched, dt, { events: true });
   const c = fit(p.canvas);
-  if (c) drawScene(c, view, SIM.sched, SIM.fx[i], { role, circuit: false });
+  if (c) drawScene(c, views[i], SIM.sched, SIM.fx[i], { role, circuit: false });
+}
+// Spieler: beide Sägen nebeneinander im eigenen Fenster, Rahmen und Grösse bleiben wie im Spiel
+function drawSimSolo(p, views) {
+  setText(p.name, 'Simulation');
+  setText(p.role, '');
+  p.wait.hidden = true;
+  const c = fit(p.canvas);
+  if (!c) return;
+  const gap = 16, hw = (c.w - gap) / 2;
+  c.ctx.clearRect(0, 0, c.w, c.h);
+  views.forEach((v, i) => drawScene({ ctx: c.ctx, w: hw, h: c.h, x: i * (hw + gap) }, v, SIM.sched, SIM.fx[i], { role: SIM.saws[i].role, circuit: false }));
 }
 
 // Maus: Wechselstrom mit der Bewegung, Gleichstrom mit dem Rad

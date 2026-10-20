@@ -80,7 +80,9 @@ td,th{white-space:nowrap}
 .arena.solo #pB{display:none}
 .arena.solo .stage{max-height:max(240px,calc(100vh - 280px))}
 .arena.solo .stats{display:none}
-.arena.sim .stats,.arena.sim .overlay{display:none}
+.arena.sim .overlay{display:none}
+.duelhow{margin-top:24px}
+.duelhow ul{max-width:none}
 #simBtn[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 #duel .bar{scroll-margin-top:12px}
 .chip.opp{color:var(--ink);font-size:1.05rem}
@@ -256,27 +258,16 @@ td,th{white-space:nowrap}
       </div>
     </div>
 
-    <div class="lab">
-      <section class="note" aria-labelledby="howTitle">
-        <div class="notehead"><h2 id="howTitle">So geht das Duell</h2></div>
-        <ul>
-          <li>Zwei spielen gegeneinander, alle anderen schauen zu. Wer zuerst Namen eingibt und auf Mitspielen klickt, bekommt einen Platz, liest die Anleitung und klickt auf Bereit.</li>
-          <li><b class="c-ac">Wechselstrom:</b> Maus nach links und rechts bewegen. <b class="c-dc">Gleichstrom:</b> Mausrad drehen, immer in die gleiche Richtung.</li>
-          <li>Eine Minute Zeit. Wer dann mehr Stämme durchgesägt hat, gewinnt. Nach jeder Runde wird die Stromart getauscht.</li>
-          <li>Erst sägen, wenn die Ampel grün ist. Wer sägt, während der Stamm noch rollt, blockiert ihn.</li>
-          <li>Steckt ein Nagel im Holz, heisst es <b>Stopp!</b> Nichts bewegen, bis der Magnet ihn herausgezogen hat. Sonst reisst das Seil.</li>
-        </ul>
-      </section>
-      <section class="note" aria-labelledby="roundsTitle">
-        <div class="notehead"><h2 id="roundsTitle">Rundenliste</h2></div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th scope="col">Runde</th><th scope="col" class="c-ac">Wechselstrom</th><th scope="col" class="c-dc">Gleichstrom</th><th scope="col">Sieg</th></tr></thead>
-            <tbody id="roundsBody"><tr><td class="empty" colspan="4">Noch keine Runde gespielt.</td></tr></tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+    <section class="note duelhow" aria-labelledby="howTitle">
+      <div class="notehead"><h2 id="howTitle">So geht das Duell</h2></div>
+      <ul>
+        <li>Zwei spielen gegeneinander, alle anderen schauen zu. Wer zuerst Namen eingibt und auf Mitspielen klickt, bekommt einen Platz, liest die Anleitung und klickt auf Bereit.</li>
+        <li><b class="c-ac">Wechselstrom:</b> Maus nach links und rechts bewegen. <b class="c-dc">Gleichstrom:</b> Mausrad drehen, immer in die gleiche Richtung.</li>
+        <li>Eine Minute Zeit. Wer dann mehr Stämme durchgesägt hat, gewinnt. Nach jeder Runde wird die Stromart getauscht.</li>
+        <li>Erst sägen, wenn die Ampel grün ist. Wer sägt, während der Stamm noch rollt, blockiert ihn.</li>
+        <li>Steckt ein Nagel im Holz, heisst es <b>Stopp!</b> Nichts bewegen, bis der Magnet ihn herausgezogen hat. Sonst reisst das Seil.</li>
+      </ul>
+    </section>
   </section>
 </div>
 <script src="game.js"></script>
