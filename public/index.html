@@ -78,7 +78,9 @@
 td,th{white-space:nowrap}
 .arena.solo{grid-template-columns:minmax(0,1fr)}
 .arena.solo #pB{display:none}
-.arena.solo .stage{max-height:62vh}
+.arena.solo .stage{max-height:max(240px,calc(100vh - 280px))}
+.arena.solo .stats{display:none}
+#duel .bar{scroll-margin-top:12px}
 .chip.opp{color:var(--ink);font-size:1.05rem}
 .how{text-align:left;gap:12px;width:min(100%,600px)}
 .how .eyebrow,.how h2{text-align:center}

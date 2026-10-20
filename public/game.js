@@ -1075,6 +1075,7 @@ function onMessage(m) {
     if (D.you >= 0) joinMsg.textContent = '';
     renderRounds();
     render();
+    if (was < 0 && D.you >= 0) focusGame();
   } else if (m.t === 'start') {
     toLobby();
     Object.assign(D, { phase: 'countdown', round: m.round, roles: m.roles, dur: m.dur, startAt: performance.now() + m.delay, sendAcc: 0, doneSent: false, lastCount: 0 });
@@ -1083,6 +1084,7 @@ function onMessage(m) {
     D.remote.forEach(r => r.reset());
     if (D.you >= 0) D.saw = new Sawyer(D.roles[D.you], D.sched, true, { limit: D.dur });
     render();
+    if (D.you >= 0) focusGame();
   } else if (m.t === 'peer') {
     if (D.phase !== 'lobby') D.remote[m.slot].push(m.s);
   } else if (m.t === 'result') {
@@ -1146,7 +1148,7 @@ readyBtn.addEventListener('click', () => {
 nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') readyBtn.click(); });
 watchBtn.addEventListener('click', () => { send({ t: 'watch' }); toLobby(); });
 $('#howReady').addEventListener('click', () => { Sound.ensure(); D.howSeen = true; send({ t: 'ready' }); });
-$('#howPractice').addEventListener('click', () => { Sound.ensure(); D.howSeen = true; render(); });
+$('#howPractice').addEventListener('click', () => { Sound.ensure(); D.howSeen = true; render(); focusGame(); });
 $('#howWatch').addEventListener('click', () => watchBtn.click());
 
 // Knöpfe, Namen und Texte, wenn sich am Spiel etwas ändert
@@ -1288,10 +1290,15 @@ window.addEventListener('mousemove', e => {
   const s = mySaw();
   if (s && s.role === 'ac' && e.movementX) s.move(clamp(e.movementX * CFG.MOUSE, -1, 1));
 });
+// Wer spielt, dem scrollt die Seite nie weg, auch wenn die Maus neben der Säge ist. Nur bei offener Anleitung oder Ergebnis darf man scrollen.
+const lockScroll = () => current === 'duel' && D.you >= 0 && (busy() || (D.phase === 'lobby' && $('#howTo').hidden));
+// Uhr, Knöpfe und Säge ganz ins Bild holen, weil danach nicht mehr gescrollt werden kann
+function focusGame() {
+  if (current === 'duel') requestAnimationFrame(() => $('#duel .bar').scrollIntoView({ block: 'start', behavior: 'smooth' }));
+}
 window.addEventListener('wheel', e => {
-  if (current !== 'duel' || D.you < 0) return;
-  const own = e.target instanceof Node && panels[0].el.contains(e.target);
-  if (busy() || own) e.preventDefault();
+  if (!lockScroll()) return;
+  e.preventDefault();
   const s = mySaw();
   if (!s || s.role !== 'dc') return;
   const px = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaMode === 2 ? e.deltaY * 400 : e.deltaY;
